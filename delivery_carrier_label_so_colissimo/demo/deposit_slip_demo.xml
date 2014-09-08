@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="deposit_slip_so_colissimo" model="deposit.slip">
+            <field name="active" eval="True"/>
+        </record>
+
+    </data>
+</openerp>

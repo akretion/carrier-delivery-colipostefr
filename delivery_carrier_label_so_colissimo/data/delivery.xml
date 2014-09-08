@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="0">
+
+<!-- DELIVERY CARRIER -->
+<record id="delivery_carrier_coliposte_6A" model="delivery.carrier">
+    <field name="name">6A, SoColissimo Domicile sans signature</field>
+    <field name="type">so_colissimo</field>
+    <field name="code">6A</field>
+    <field name="deposit_slip" eval="True"/>
+    <field name="partner_id"
+           ref="delivery_carrier_colipostefr.partner_la_poste"/>
+    <field name="product_id"
+           ref="delivery_carrier_colipostefr.product_product_la_poste"/>
+</record>
+<record id="6A_colipostefr_delivery_carrier_template_NM" model="delivery.carrier.option">
+    <field name="readonly_flag" eval="True"/>
+    <field name="mandatory" eval="False"/>
+    <field name="by_default" eval="False"/>
+    <field name="carrier_id" ref="delivery_carrier_coliposte_6A"/>
+    <field name="tmpl_option_id" ref="delivery_carrier_colipostefr.delivery_carrier_template_NM"/>
+</record>
+
+<record id="delivery_carrier_coliposte_6C" model="delivery.carrier">
+    <field name="name">6C, SoColissimo Domicile avec signature</field>
+    <field name="type">so_colissimo</field>
+    <field name="code">6C</field>
+    <field name="deposit_slip" eval="True"/>
+    <field name="partner_id"
+           ref="delivery_carrier_colipostefr.partner_la_poste"/>
+    <field name="product_id"
+           ref="delivery_carrier_colipostefr.product_product_la_poste"/>
+</record>
+<record id="6C_colipostefr_delivery_carrier_template_NM" model="delivery.carrier.option">
+    <field name="readonly_flag" eval="True"/>
+    <field name="mandatory" eval="False"/>
+    <field name="by_default" eval="False"/>
+    <field name="carrier_id" ref="delivery_carrier_coliposte_6C"/>
+    <field name="tmpl_option_id" ref="delivery_carrier_colipostefr.delivery_carrier_template_NM"/>
+</record>
+
+<record id="delivery_carrier_coliposte_6K" model="delivery.carrier">
+    <field name="name">6K, SoColissimo Mon Rendez-vous</field>
+    <field name="type">so_colissimo</field>
+    <field name="code">6K</field>
+    <field name="deposit_slip" eval="True"/>
+    <field name="partner_id"
+           ref="delivery_carrier_colipostefr.partner_la_poste"/>
+    <field name="product_id"
+           ref="delivery_carrier_colipostefr.product_product_la_poste"/>
+</record>
+<record id="6K_colipostefr_delivery_carrier_template_NM" model="delivery.carrier.option">
+    <field name="readonly_flag" eval="True"/>
+    <field name="mandatory" eval="False"/>
+    <field name="by_default" eval="False"/>
+    <field name="carrier_id" ref="delivery_carrier_coliposte_6K"/>
+    <field name="tmpl_option_id" ref="delivery_carrier_colipostefr.delivery_carrier_template_NM"/>
+</record>
+
+<record id="delivery_carrier_coliposte_6J" model="delivery.carrier">
+    <field name="name">6J, SoColissimo Cityssimo</field>
+    <field name="type">so_colissimo</field>
+    <field name="code">6J</field>
+    <field name="deposit_slip" eval="True"/>
+    <field name="partner_id"
+           ref="delivery_carrier_colipostefr.partner_la_poste"/>
+    <field name="product_id"
+           ref="delivery_carrier_colipostefr.product_product_la_poste"/>
+</record>
+<record id="6J_colipostefr_delivery_carrier_template_NM" model="delivery.carrier.option">
+    <field name="readonly_flag" eval="True"/>
+    <field name="mandatory" eval="False"/>
+    <field name="by_default" eval="False"/>
+    <field name="carrier_id" ref="delivery_carrier_coliposte_6J"/>
+    <field name="tmpl_option_id" ref="delivery_carrier_colipostefr.delivery_carrier_template_NM"/>
+</record>
+<record id="6J_delivery_carrier_template_Dropoff" model="delivery.carrier.option">
+    <field name="readonly_flag" eval="True"/>
+    <field name="mandatory" eval="True"/>
+    <field name="carrier_id" ref="delivery_carrier_coliposte_6J"/>
+    <field name="tmpl_option_id"
+           ref="delivery_dropoff_site.delivery_carrier_template_to_dropoff_site"/>
+</record>
+
+<record id="delivery_carrier_coliposte_6H" model="delivery.carrier">
+    <field name="name">6H, SoColissimo Bureau de poste</field>
+    <field name="type">so_colissimo</field>
+    <field name="code">6H</field>
+    <field name="deposit_slip" eval="True"/>
+    <field name="partner_id"
+           ref="delivery_carrier_colipostefr.partner_la_poste"/>
+    <field name="product_id"
+           ref="delivery_carrier_colipostefr.product_product_la_poste"/>
+</record>
+<record id="6H_colipostefr_delivery_carrier_template_NM" model="delivery.carrier.option">
+    <field name="readonly_flag" eval="True"/>
+    <field name="mandatory" eval="False"/>
+    <field name="by_default" eval="False"/>
+    <field name="carrier_id" ref="delivery_carrier_coliposte_6H"/>
+    <field name="tmpl_option_id" ref="delivery_carrier_colipostefr.delivery_carrier_template_NM"/>
+</record>
+<record id="6H_delivery_carrier_template_Dropoff" model="delivery.carrier.option">
+    <field name="readonly_flag" eval="True"/>
+    <field name="mandatory" eval="True"/>
+    <field name="carrier_id" ref="delivery_carrier_coliposte_6H"/>
+    <field name="tmpl_option_id"
+           ref="delivery_dropoff_site.delivery_carrier_template_to_dropoff_site"/>
+</record>
+
+<record id="delivery_carrier_coliposte_6M" model="delivery.carrier">
+    <field name="name">6M, SoColissimo Commerçant</field>
+    <field name="type">so_colissimo</field>
+    <field name="code">6M</field>
+    <field name="deposit_slip" eval="True"/>
+    <field name="partner_id"
+           ref="delivery_carrier_colipostefr.partner_la_poste"/>
+    <field name="product_id"
+           ref="delivery_carrier_colipostefr.product_product_la_poste"/>
+</record>
+<record id="6M_colipostefr_delivery_carrier_template_NM" model="delivery.carrier.option">
+    <field name="readonly_flag" eval="True"/>
+    <field name="mandatory" eval="False"/>
+    <field name="by_default" eval="False"/>
+    <field name="carrier_id" ref="delivery_carrier_coliposte_6M"/>
+    <field name="tmpl_option_id" ref="delivery_carrier_colipostefr.delivery_carrier_template_NM"/>
+</record>
+<record id="6M_delivery_carrier_template_Dropoff" model="delivery.carrier.option">
+    <field name="readonly_flag" eval="True"/>
+    <field name="mandatory" eval="True"/>
+    <field name="carrier_id" ref="delivery_carrier_coliposte_6M"/>
+    <field name="tmpl_option_id"
+           ref="delivery_dropoff_site.delivery_carrier_template_to_dropoff_site"/>
+</record>
+
+    </data>
+</openerp>

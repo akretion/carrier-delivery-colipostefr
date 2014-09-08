@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="0">
+        <!-- Sequence TYPES  -->
+
+        <record id="seq_type_delivery_carrier_colissimo_6A" model="ir.sequence.type">
+            <field name="name">Delivery 6A</field>
+            <field name="code">stock.picking_6A</field>
+        </record>
+        <record id="seq_type_delivery_carrier_colissimo_6C" model="ir.sequence.type">
+            <field name="name">Delivery 6C</field>
+            <field name="code">stock.picking_6C</field>
+        </record>
+        <record id="seq_type_delivery_carrier_colissimo_6K" model="ir.sequence.type">
+            <field name="name">Delivery 6K</field>
+            <field name="code">stock.picking_6K</field>
+        </record>
+        <record id="seq_type_delivery_carrier_colissimo_6J" model="ir.sequence.type">
+            <field name="name">Delivery 6J</field>
+            <field name="code">stock.picking_6J</field>
+        </record>
+        <record id="seq_type_delivery_carrier_colissimo_6H" model="ir.sequence.type">
+            <field name="name">Delivery 6H</field>
+            <field name="code">stock.picking_6H</field>
+        </record>
+        <record id="seq_type_delivery_carrier_colissimo_6M" model="ir.sequence.type">
+            <field name="name">Delivery 6M</field>
+            <field name="code">stock.picking_6M</field>
+        </record>
+
+        <!--  SEQUENCES -->
+        <!-- Mon domicile, sans signature -->
+        <record id="seq_delivery_carrier_colissimo_6A" model="ir.sequence">
+            <field name="name">So Colissimo Mon domicile sign, 6A</field>
+            <field name="code">stock.picking_6A</field>
+            <field name="prefix">6A 00000 </field>
+            <field name="number_increment">1</field>
+            <field name="padding">5</field>
+            <field name="implementation">no_gap</field>
+        </record>
+
+        <!-- Mon domicile avec -->
+        <record id="seq_delivery_carrier_colissimo_6C" model="ir.sequence">
+            <field name="name">So Colissimo Mon domicile, 6C</field>
+            <field name="code">stock.picking_6C</field>
+            <field name="prefix">6C 00000 </field>
+            <field name="number_increment">1</field>
+            <field name="padding">5</field>
+            <field name="implementation">no_gap</field>
+        </record>
+
+        <!-- Mon Rendez-vous -->
+        <record id="seq_delivery_carrier_colissimo_6K" model="ir.sequence">
+            <field name="name">So Colissimo Mon Rendez-vous, 6K</field>
+            <field name="code">stock.picking_6K</field>
+            <field name="prefix">6K 00000 </field>
+            <field name="number_increment">1</field>
+            <field name="padding">5</field>
+            <field name="implementation">no_gap</field>
+        </record>
+
+        <!-- Espace cityssimo -->
+        <record id="seq_delivery_carrier_colissimo_6J" model="ir.sequence">
+            <field name="name">So Colissimo Cityssimo, 6J</field>
+            <field name="code">stock.picking_6J</field>
+            <field name="prefix">6J 00000 </field>
+            <field name="number_increment">1</field>
+            <field name="padding">5</field>
+            <field name="implementation">no_gap</field>
+        </record>
+
+        <!-- Bureau de poste -->
+        <record id="seq_delivery_carrier_colissimo_6H" model="ir.sequence">
+            <field name="name">So Colissimo bureau Poste, 6H</field>
+            <field name="code">stock.picking_6H</field>
+            <field name="prefix">6H 00000 </field>
+            <field name="number_increment">1</field>
+            <field name="padding">5</field>
+            <field name="implementation">no_gap</field>
+        </record>
+
+        <!-- Commerçant -->
+        <record id="seq_delivery_carrier_colissimo_6M" model="ir.sequence">
+            <field name="name">So Colissimo bureau Poste, 6M</field>
+            <field name="code">stock.picking_6M</field>
+            <field name="prefix">6M 00000 </field>
+            <field name="number_increment">1</field>
+            <field name="padding">5</field>
+            <field name="implementation">no_gap</field>
+        </record>
+
+    </data>
+</openerp>

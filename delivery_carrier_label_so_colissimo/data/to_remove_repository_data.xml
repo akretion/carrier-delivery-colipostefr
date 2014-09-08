@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data noupdate="1">
+
+<record id="colipostefr_ftp" model="file.repository">
+    <field name="name">Coliposte</field>
+    <field name="type">ftp</field>
+</record>
+
+<record id="colipostefr_dropoff_import" model="repository.task">
+    <field name="name">Mise à jour des points relais Coliposte</field>
+    <field name="repository_id" eval="colipostefr_ftp"/>
+    <field name="direction">in</field>
+    <field name="type">dropoff_site</field>
+</record>
+
+    </data>
+</openerp>

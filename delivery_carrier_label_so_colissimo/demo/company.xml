@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="0">
+
+        <!-- Resource: res.company -->
+        <record id="base.main_company" model="res.company">
+            <field name="colipostefr_account_chargeur"></field>
+       </record>
+
+    </data>
+</openerp>
