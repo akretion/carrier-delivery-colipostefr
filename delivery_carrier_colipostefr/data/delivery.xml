@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+
+        <record id="delivery_carrier_template_NM"
+                model="delivery.carrier.template.option">
+            <field name="name">Non Mécanisable</field>
+            <field name="code">NM</field>
+        </record>
+
+        <!-- PRODUCT  -->
+        <record id="product_product_la_poste" model="product.product">
+            <field name="default_code">SHIP_LP</field>
+            <field name="standard_price">0.0</field>
+            <field name="cost_method">standard</field>
+            <field name="type">service</field>
+            <field name="procure_method">make_to_stock</field>
+            <field name="supply_method">buy</field>
+            <field name="name">Coûts de livraison - La Poste</field>
+            <field name="categ_id">1</field>
+        </record>
+
+        <!-- PARTNER -->
+        <record id="partner_la_poste" model="res.partner">
+            <field name="name">La Poste</field>
+            <field name="customer" eval="False"/>
+            <field name="supplier" eval="True"/>
+            <field name="street">rue du colis</field>
+            <field name="zip">99999</field>
+            <field name="city">XXXXXX PFC</field>
+        </record>
+
+    </data>
+</openerp>

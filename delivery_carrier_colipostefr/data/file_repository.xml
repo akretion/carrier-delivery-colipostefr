@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+
+<record id="file_repository_for_laposte_edi" model="file.repository">
+    <field name="name">La Poste Edi</field>
+    <field name="type">ftp</field>
+</record>
+
+<record id="repository_task_for_laposte_edi" model="repository.task">
+    <field name="name">La Poste Edi</field>
+    <field name="direction">out</field>
+    <field name="type">export</field>
+    <field name="repository_id" ref="file_repository_for_laposte_edi"/>
+</record>
+
+<record id="base.main_company" model="res.company">
+    <field name="colipostefr_repo_task_id" ref="repository_task_for_laposte_edi"/>
+</record>
+
+    </data>
+</openerp>
