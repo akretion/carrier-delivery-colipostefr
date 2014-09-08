@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+        <!-- Sequence TYPES  -->
+
+        <record id="seq_type_delivery_carrier_colissimo_9L" model="ir.sequence.type">
+            <field name="name">Delivery 9L</field>
+            <field name="code">stock.picking_9L</field>
+        </record>
+        <record id="seq_type_delivery_carrier_colissimo_9V" model="ir.sequence.type">
+            <field name="name">Delivery 9V</field>
+            <field name="code">stock.picking_9V</field>
+        </record>
+        <record id="seq_type_delivery_carrier_colissimo_7Q" model="ir.sequence.type">
+            <field name="name">Delivery 7Q</field>
+            <field name="code">stock.picking_7Q</field>
+        </record>
+        <record id="seq_type_delivery_carrier_colissimo_8Q" model="ir.sequence.type">
+            <field name="name">Delivery 8Q</field>
+            <field name="code">stock.picking_8Q</field>
+        </record>
+
+<!--        <record id="seq_type_delivery_carrier_colissimo_8R" model="ir.sequence.type">
+            <field name="name">Delivery 8R</field>
+            <field name="code">stock.picking_8R</field>
+        </record>
+-->
+        <!--  SEQUENCES -->
+        <!-- Access France, sans signature-->
+        <record id="seq_delivery_carrier_colissimo_9L" model="ir.sequence">
+            <field name="name">Colissimo Access, 9L</field>
+            <field name="code">stock.picking_9L</field>
+            <field name="prefix">9L 00000 </field>
+            <!--<field name="number_next">10001</field> A RENTRER MANUELLEMENT -->
+            <field name="number_increment">1</field>
+            <field name="padding">5</field>
+            <field name="implementation">no_gap</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!-- Expert France, avec signature -->
+        <record id="seq_delivery_carrier_colissimo_9V" model="ir.sequence">
+            <field name="name">Colissimo Expert France, 9V</field>
+            <field name="code">stock.picking_9V</field>
+            <field name="prefix">9V 00000 </field>
+            <field name="number_increment">1</field>
+            <field name="padding">5</field>
+            <field name="implementation">no_gap</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!-- Expert Outre Mer - Remise contre signature -->
+        <record id="seq_delivery_carrier_colissimo_7Q" model="ir.sequence">
+            <field name="name">Colissimo Expert OM, 7Q</field>
+            <field name="code">stock.picking_7Q</field>
+            <field name="prefix">7Q 53894 </field>
+            <!--<field name="number_next">39016</field>-->
+            <field name="number_increment">1</field>
+            <field name="padding">5</field>
+            <field name="implementation">no_gap</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <record id="seq_delivery_carrier_colissimo_8Q" model="ir.sequence">
+            <field name="name">Colissimo Access OM, 8Q</field>
+            <field name="code">stock.picking_8Q</field>
+            <field name="prefix">8Q 00000</field>
+            <!--<field name="number_next">39016</field>-->
+            <field name="number_increment">1</field>
+            <field name="padding">5</field>
+            <field name="implementation">no_gap</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!-- Service, avec signature -->
+<!--        <record id="seq_delivery_carrier_colissimo_8R" model="ir.sequence">
+            <field name="name">Colissimo Service, 8R</field>
+            <field name="code">stock.picking_8R</field>
+            <field name="prefix">8R 00000 </field>
+            <field name="number_next">00001</field>
+            <field name="number_increment">1</field>
+            <field name="padding">5</field>
+            <field name="implementation">no_gap</field>
+            <field name="company_id" eval="False"/>
+        </record>
+-->
+    </data>
+</openerp>

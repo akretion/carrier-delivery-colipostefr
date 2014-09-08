@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+  <data>
+
+<!-- After installation of the module, open the adhoc menu -->
+<record id="base.open_menu" model="ir.actions.todo">
+  <field name="action_id" ref="base_delivery_carrier_label.action_delivery_method_from_carrier_module_install"/>
+  <field name="state">open</field>
+</record>
+
+  </data>
+</openerp>

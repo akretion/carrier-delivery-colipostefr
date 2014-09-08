@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="0">
+
+
+<!-- DELIVERY CARRIER TEMPLATE OPTION -->
+<record id="delivery_carrier_template_AR"
+        model="delivery.carrier.template.option">
+    <field name="name">Accusé de Réception</field>
+    <field name="code">AR</field>
+</record>
+
+<record id="delivery_carrier_template_FTD"
+        model="delivery.carrier.template.option">
+    <field name="name">Franc de taxes et de droits</field>
+    <field name="code">FTD</field>
+</record>
+
+<!-- DELIVERY CARRIER -->
+<record id="delivery_carrier_9L" model="delivery.carrier">
+    <field name="name">9L, Colissimo Access</field>
+    <field name="type">colissimo</field>
+    <field name="code">9L</field>
+    <field name="partner_id" ref="delivery_carrier_colipostefr.partner_la_poste"/>
+    <field name="product_id" ref="delivery_carrier_colipostefr.product_product_la_poste"/>
+</record>
+
+<record id="9L_colipostefr_delivery_carrier_template_NM" model="delivery.carrier.option">
+    <field name="readonly_flag" eval="True"/>
+    <field name="mandatory" eval="False"/>
+    <field name="by_default" eval="False"/>
+    <field name="carrier_id" ref="delivery_carrier_9L"/>
+    <field name="tmpl_option_id" ref="delivery_carrier_colipostefr.delivery_carrier_template_NM"/>
+</record>
+
+<record id="delivery_carrier_9V" model="delivery.carrier">
+    <field name="name">9V, Colissimo Expert France</field>
+    <field name="type">colissimo</field>
+    <field name="code">9V</field>
+    <field name="partner_id" ref="delivery_carrier_colipostefr.partner_la_poste"/>
+    <field name="product_id" ref="delivery_carrier_colipostefr.product_product_la_poste"/>
+</record>
+
+<record id="9V_colipostefr_delivery_carrier_template_NM" model="delivery.carrier.option">
+    <field name="readonly_flag" eval="True"/>
+    <field name="mandatory" eval="False"/>
+    <field name="by_default" eval="False"/>
+    <field name="carrier_id" ref="delivery_carrier_9V"/>
+    <field name="tmpl_option_id" ref="delivery_carrier_colipostefr.delivery_carrier_template_NM"/>
+</record>
+
+<record id="delivery_carrier_8Q" model="delivery.carrier">
+    <field name="name">8Q, Colissimo Access OM</field>
+    <field name="type">colissimo</field>
+    <field name="code">8Q</field>
+    <field name="partner_id" ref="delivery_carrier_colipostefr.partner_la_poste"/>
+    <field name="product_id" ref="delivery_carrier_colipostefr.product_product_la_poste"/>
+</record>
+
+<record id="8Q_colipostefr_delivery_carrier_template_NM" model="delivery.carrier.option">
+    <field name="readonly_flag" eval="True"/>
+    <field name="mandatory" eval="False"/>
+    <field name="by_default" eval="False"/>
+    <field name="carrier_id" ref="delivery_carrier_8Q"/>
+    <field name="tmpl_option_id" ref="delivery_carrier_colipostefr.delivery_carrier_template_NM"/>
+</record>
+
+<record id="delivery_carrier_7Q" model="delivery.carrier">
+    <field name="name">7Q, Colissimo Expert OM</field>
+    <field name="type">colissimo</field>
+    <field name="code">7Q</field>
+    <field name="partner_id" ref="delivery_carrier_colipostefr.partner_la_poste"/>
+    <field name="product_id" ref="delivery_carrier_colipostefr.product_product_la_poste"/>
+</record>
+
+<record id="7Q_colipostefr_delivery_carrier_template_NM" model="delivery.carrier.option">
+    <field name="readonly_flag" eval="True"/>
+    <field name="mandatory" eval="False"/>
+    <field name="by_default" eval="False"/>
+    <field name="carrier_id" ref="delivery_carrier_7Q"/>
+    <field name="tmpl_option_id" ref="delivery_carrier_colipostefr.delivery_carrier_template_NM"/>
+</record>
+
+<record id="7Q_delivery_carrier_template_AR" model="delivery.carrier.option">
+    <field name="readonly_flag" eval="True"/>
+    <field name="mandatory" eval="False"/>
+    <field name="by_default" eval="True"/>
+    <field name="carrier_id" ref="delivery_carrier_7Q"/>
+    <field name="tmpl_option_id" ref="delivery_carrier_template_AR"/>
+</record>
+
+<record id="7Q_delivery_carrier_template_FTD" model="delivery.carrier.option">
+    <field name="readonly_flag" eval="True"/>
+    <field name="mandatory" eval="False"/>
+    <field name="by_default" eval="True"/>
+    <field name="carrier_id" ref="delivery_carrier_7Q"/>
+    <field name="tmpl_option_id" ref="delivery_carrier_template_FTD"/>
+</record>
+
+<record id="delivery_carrier_EI" model="delivery.carrier">
+    <field name="name">EI, Colissimo Expert Internat.</field>
+    <field name="type">colissimo</field>
+    <field name="code">EI</field>
+    <field name="partner_id" ref="delivery_carrier_colipostefr.partner_la_poste"/>
+    <field name="product_id" ref="delivery_carrier_colipostefr.product_product_la_poste"/>
+</record>
+
+<record id="I_colipostefr_delivery_carrier_template_NM" model="delivery.carrier.option">
+    <field name="mandatory" eval="False"/>
+    <field name="by_default" eval="False"/>
+    <field name="carrier_id" ref="delivery_carrier_EI"/>
+    <field name="tmpl_option_id" ref="delivery_carrier_colipostefr.delivery_carrier_template_NM"/>
+</record>
+
+<!--
+Defined in specs but this option is not accepted by webservice
+<record id="I_delivery_carrier_template_AR" model="delivery.carrier.option">
+    <field name="mandatory" eval="False"/>
+    <field name="by_default" eval="True"/>
+    <field name="carrier_id" ref="delivery_carrier_EI"/>
+    <field name="tmpl_option_id" ref="delivery_carrier_template_AR"/>
+</record>
+-->
+
+    </data>
+</openerp>

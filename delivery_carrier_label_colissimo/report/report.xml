@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (C) 2014 Akretion
+  The licence is in the file __openerp__.py
+-->
+
+<openerp>
+<data>
+
+
+<!-- Webkit DEPOSIT SLIP -->
+<report id="stock_picking_deposit_coliposte"
+        name="stock.picking.deposit.coliposte"
+        auto="False"
+        model="deposit.slip"
+        string="ColiPoste Deposit Slip"
+        file="delivery_carrier_label_colissimo/report/deposit_slip.mako"
+        report_type="webkit"
+        webkit_header="base_headers_webkit.base_minimum_reports_portrait_header"
+        header="False"/>
+
+<!-- Webkit ColiPoste CN23  -->
+<report id="report_stock_picking_coliposte_cn23"
+        name="stock.picking.cn23"
+        auto="False"
+        model="stock.picking.out"
+        string="ColiPoste_CN23"
+        file="delivery_carrier_label_colissimo/report/cn23.mako"
+        report_type="webkit"
+        attachment_use="True"
+        attachment="'CN23.pdf'"
+        webkit_header="base_headers_webkit.base_minimum_reports_portrait_header"
+        header="False"
+        />
+
+</data>
+</openerp>
