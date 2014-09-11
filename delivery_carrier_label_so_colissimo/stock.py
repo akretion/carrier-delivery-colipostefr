@@ -95,6 +95,9 @@ class StockPicking(orm.Model):
         elif partner_id.name[0:16].lower() == 'espace cityssimo':
             address['name2'] = partner_id.name[17:]
             address['name'] = 'ESPACE CITYSSIMO'
+        if 'name2' in address:
+            # name2 max lenght is 30
+            address['name2'] = address['name2'][:30]
         streets = self.pool['res.partner']._get_split_address(
             cr, uid, partner_id, 4, max_street_size, context=context)
         address.update({

@@ -28,5 +28,6 @@ class ResCompany(orm.Model):
         'colipostefr_account_chargeur': fields.char(
             'Chargeur',
             size=9,
-            help="Compte chargeur 'So Colissimo - 6J'"),
+            help="Compte chargeur 'So Colissimo - 6J'"
+                 "Nombre à 9 caractères"),
     }
