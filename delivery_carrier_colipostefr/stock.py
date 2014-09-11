@@ -71,7 +71,7 @@ def map_except_message(message):
 def move_label_content(content, tag, value, axis='y'):
     """ move label content
         :param content: unicode: whole text to parse
-        :param tag: str: string to search in content for replacement pupose
+        :param tag: str: string to search in content for replacement purpose
         :param value: integer: define position x or y in the label
         :param axis: char: direction x or y
     """
@@ -164,7 +164,7 @@ class StockPicking(orm.Model):
 
     def _prepare_address_postefr(self, cr, uid, pick, context=None):
         address = {}
-        for elm in ['name', 'city', 'zip']:
+        for elm in ['name', 'city', 'zip', 'phone', 'mobile']:
             address[elm] = pick.partner_id[elm]
         # 3 is the number of fields street
         # 35 is the field street max length
@@ -248,7 +248,10 @@ class StockPicking(orm.Model):
                         cr, uid, service, pick,
                         carrier['carrier_tracking_ref'],
                         option, context=context)
-                self.write(cr, uid, [pick.id], carrier)
+                # write is done 'stock.picking.out' to allow
+                # trigger connector job in projects prestashoperpconnect
+                # and magentoerpconnect
+                self.pool['stock.picking.out'].write(cr, uid, [pick.id], carrier)
                 pick = self.browse(cr, uid, pick.id, carrier)
             sender = self._prepare_sender_postefr(cr, uid, pick, context=context)
             delivery = self._prepare_delivery_postefr(cr, uid, pick, context=context)
@@ -373,12 +376,6 @@ class StockPicking(orm.Model):
 
 
 class StockPickingOut(orm.Model):
-    """
-    TODO : manage coliss_assur with colissimo carrier_code :
-        => hide/display and use or not this selection
-            - Assurance : EI, AI, 7Q, 8V, 9V
-            - Recommandation: 8V, 9V, 7Q
-    """
     _inherit = ['stock.picking.out', 'abstract.coliposte.picking']
     _name = 'stock.picking.out'
 
@@ -387,7 +384,6 @@ class StockPickingOut(orm.Model):
             default = {}
         default.update({
             'deposit_slip_id': None,
-            #'name': None,
             'carrier_tracking_ref': None,
             'colipostefr_prise_en_charge': None,
         })
@@ -417,4 +413,3 @@ class ShippingLabel(orm.Model):
             cr, uid, context=None)
         selection.append(('zpl2', 'ZPL2'))
         return selection
-
