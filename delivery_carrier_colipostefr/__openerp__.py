@@ -27,7 +27,7 @@
     'maintainer': 'Akretion',
     'category': 'Warehouse',
     'depends': [
-        'base_partner_helper',
+        'partner_helper',
         'delivery_carrier_b2c',
         'configuration_helper',
         'document',
