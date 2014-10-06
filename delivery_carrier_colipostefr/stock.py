@@ -21,6 +21,7 @@
 
 from openerp.osv import orm, fields
 from openerp.tools.config import config
+from openerp.tools.translate import _
 
 from laposte_api.colissimo_and_so import (
     ColiPoste,
@@ -348,10 +349,13 @@ class StockPicking(orm.Model):
         return xml_id.replace('stock_picking_', '')
 
     def _get_sequence(self, cr, uid, label, context=None):
-        #TODO : foreigner service sender:
-        #sequence will be provided by webservice since 2014 July
-        return self.pool['ir.sequence'].next_by_code(
+        sequence = self.pool['ir.sequence'].next_by_code(
             cr, uid, 'stock.picking_' + label, context=context)
+        if not sequence:
+            raise orm.except_orm(
+                _("Picking sequence"),
+                _("There is no sequence defined for the label '%s'") % label)
+        return sequence
 
     def _barcode_prise_en_charge_generate(
             self, cr, uid, service, picking, carrier_track, option, context=None):
