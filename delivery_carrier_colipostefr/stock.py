@@ -66,6 +66,19 @@ def map_except_message(message):
         message = message.replace('(model: ' + key, '\n(check model: ' + val)
     for key, val in webservice_mapping.items():
         message = message.replace(key, val)
+    if 'commercial afin de reinitialiser votre compte client' in message:
+        message += ("\n\nEn gros à ce stade, "
+                    "si vous avez saisi correctement votre identifiant"
+                    "et mot de passe transmis par votre commercial"
+                    "\nil est probable que ce dernier"
+                    "n'a pas terminé le boulot jusqu'au bout"
+                    "\nVraisemblablement, vous allez passez encore "
+                    "beaucoup de temps à faire la balle de ping pong entre les"
+                    "services: commercial, ADV et Support Intégration Clients."
+                    "\nCe dernier est probablement votre meilleur chance."
+                    "\nun homme averti en vaut deux"
+                    "\nBougez avec la poste"
+                    "\nBonne chance\n\n(the developer team)")
     return message
 
 
@@ -416,4 +429,5 @@ class ShippingLabel(orm.Model):
         selection = super(ShippingLabel, self)._get_file_type_selection(
             cr, uid, context=None)
         selection.append(('zpl2', 'ZPL2'))
+        selection = list(set(selection))
         return selection
