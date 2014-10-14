@@ -59,11 +59,12 @@ class DepositSlip(orm.Model):
             "Identifiant du client": company.colipostefr_account,
             "Date expédition": create_date_format,
             #Important : cette date doit
-            #correspondre à la date réelle de dépôt physique des colis sur le site
-            #d’entrée du trafic et à la date d’émission du fichier EDI.
+            #correspondre à la date réelle de dépôt physique des colis sur
+            #le site d’entrée du trafic et à la date d’émission du fichier EDI.
             "Date d'émission du bordereau": validate_date,
             "Version Format Fichier": "02.00",
-            "Site Prise en charge": company.colipostefr_support_city_code or '',
+            "Site Prise en charge": (company.colipostefr_support_city_code
+                                     or ''),
             "Nom commercial": company.name,
         }
         return vals
@@ -145,7 +146,6 @@ class DepositSlip(orm.Model):
                     "Livraison Samedi": "O",
                     "Non Mécanisable": non_machi,
                     "Nom du destinataire": name,
-                    #picking.address_id.company #si pas magento ca marche comment ?
                     "Raison sociale": "",
                     "Première ligne d’adresse": "",
                     "Seconde ligne d'adresse": "",
@@ -163,7 +163,8 @@ class DepositSlip(orm.Model):
                     #TODO
                     "Identifiant Colissimo du destinataire": "",
                     "Téléphone": phone,
-                    "Courriel": self._coliposte_default_mail(cr, uid, address.email, context=context),
+                    "Courriel": self._coliposte_default_mail(
+                        cr, uid, address.email, context=context),
                     "Téléphone portable": mobile,
                     "Code avoir/promotion": "",
                     "Type Alerte Destinataire": "",
@@ -208,9 +209,10 @@ class DepositSlip(orm.Model):
             "Troisième ligne d'adresse", "Quatrième ligne d’adresse",
             "Code postal du destinataire", "Commune du destinataire",
             "Référence chargeur", "Code porte", "Code porte 2", "Interphone",
-            "Commentaire 1", "Information de routage", "Code Pays Destinataire",
-            "Niveau de recommandation",
-            "Accusé réception", "Type de TRI Colis", "Franc de taxe et de droit",
+            "Commentaire 1", "Information de routage",
+            "Code Pays Destinataire", "Niveau de recommandation",
+            "Accusé réception", "Type de TRI Colis",
+            "Franc de taxe et de droit",
             "Identifiant Colissimo du destinataire", "Téléphone", "Courriel",
             "Téléphone portable", "Identifiant du point de retrait",
             "Code avoir/promotion", "Type Alerte Destinataire"],
@@ -259,18 +261,6 @@ class DepositSlip(orm.Model):
         vals = self.prepare_doc_vals(
             cr, uid, deposit, name, unencrypted_datas, context=context)
         document_id = document_obj.create(cr, uid, vals, context=context)
-        ##create encrypted file
-        #encrypted_string = self.create_encrypted_file(cr, uid, datas, context=context)
-        #encrypted_file = base64.encodestring(encrypted_string)
-        #encrypted_vals = {
-        #    'name': "%s.gpg" % name,
-        #    'active': True,
-        #    'datas': encrypted_file,
-        #    'datas_fname': "%s.gpg" % name,
-        #}
-        #encrypted_doc_id = document_obj.create(cr, uid, encrypted_vals, context=context)
-        #document_ids = [document_id, encrypted_doc_id]
-        #return document_ids
         return document_id
 
     def create_edi_file(self, cr, uid, ids, context=None):
@@ -278,9 +268,12 @@ class DepositSlip(orm.Model):
         for deposit in self.browse(cr, uid, ids, context=context):
             if not deposit.picking_ids:
                 continue
-            header = self.create_header_vals(cr, uid, deposit, context=context)
-            lines = self.create_lines_vals(cr, uid, deposit, context=context)
-            if lines:
-                document_ids = self.create_file_document(
-                    cr, uid, header, lines, deposit, context=context)
+            if deposit.carrier_type in ('colissimo', 'so_colissimo'):
+                header = self.create_header_vals(
+                    cr, uid, deposit, context=context)
+                lines = self.create_lines_vals(
+                    cr, uid, deposit, context=context)
+                if lines:
+                    document_ids = self.create_file_document(
+                        cr, uid, header, lines, deposit, context=context)
         return document_ids
