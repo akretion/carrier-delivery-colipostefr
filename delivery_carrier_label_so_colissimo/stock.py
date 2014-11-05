@@ -58,12 +58,14 @@ class StockPicking(orm.Model):
                 res['domain'].update({
                     'partner_id': [
                         ('dropoff_site_id', '!=', False),
-                        ('dropoff_site_id.subtype', 'in', dropoff_mapping[carrier.code])
+                        ('dropoff_site_id.subtype', 'in',
+                         dropoff_mapping[carrier.code])
                     ],
                 })
             else:
                 res['value'].update({'has_final_recipient': False})
-                res['domain'].update({'partner_id': [('customer', '=', True)]}),
+                res['domain'].update({'partner_id': [
+                    ('customer', '=', True)]}),
         return res
 
     def _check_dropoff_site_according_to_carrier(
@@ -127,7 +129,8 @@ class StockPicking(orm.Model):
             max_street_size = 20
         if pick.has_final_recipient:
             final_address = self._partner_data_postefr(
-                cr, uid, pick.final_partner_id, max_street_size, context=context)
+                cr, uid, pick.final_partner_id, max_street_size,
+                context=context)
             # TODO define if it needs to check
             address['final_address'] = final_address
         else:

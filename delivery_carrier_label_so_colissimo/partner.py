@@ -16,8 +16,6 @@ import time
 
 TEMP_TABLE = 'partner_tmp_dropoff_coliposte'
 
-# TODO Manage street3
-
 
 def UnicodeDictReader(utf8_data, **kwargs):
     csv_reader = csv.DictReader(utf8_data, **kwargs)
@@ -64,14 +62,16 @@ class PartnerDropoffSite(orm.Model):
         required_fields = [
             (field, value)
             for field, value in self.pool['res.partner']._columns.items()
-            if value.required is True and field not in required_but_default_val]
+            if value.required is True
+            and field not in required_but_default_val]
         required_but_taken_account = (
             'dropoff_type',
             'partner_id')
         required_fields.extend([
             (field, value)
             for field, value in self._columns.items()
-            if value.required is True and field not in required_but_taken_account
+            if value.required is True
+            and field not in required_but_taken_account
         ])
         return required_fields
 
@@ -85,19 +85,19 @@ class PartnerDropoffSite(orm.Model):
         cr.execute(query % TEMP_TABLE)
         new_dropoff = {code: {'id': id, 'hash': hash}
                        for id, code, hash in cr.fetchall()}
-        #import pdb;pdb.set_trace()
         param = "%s WHERE dropoff_type = '%s'" \
                 % (self._table, self._dropoff_type)
         cr.execute(query % param)
         original_dropoff = {code: {'id': id, 'hash': hash}
                             for id, code, hash in cr.fetchall()}
-        #import pdb;pdb.set_trace()
         dropoff_to_create = list(
             set(new_dropoff.keys()) - set(original_dropoff.keys()))
-        intersection = list(set(new_dropoff.keys()) & set(original_dropoff.keys()))
-        dropoff_to_update = [str(x)
-                             for x in intersection
-                             if new_dropoff[x]['hash'] != original_dropoff[x]['hash']]
+        intersection = list(
+            set(new_dropoff.keys()) & set(original_dropoff.keys()))
+        dropoff_to_update = [
+            str(x)
+            for x in intersection
+            if new_dropoff[x]['hash'] != original_dropoff[x]['hash']]
         dropoff_to_update = tuple(dropoff_to_update)
         print '\n\n   len dropoff to CREATE', len(dropoff_to_create)
         print '\n\n   len dropoff to UPDATE', len(dropoff_to_update)
@@ -109,7 +109,7 @@ class PartnerDropoffSite(orm.Model):
         print required_fields, time.ctime()
         vals = {
             # TODO evaluate if 'carrier_partner_id' is really needed
-            #'carrier_partner_id': self.pool['ir.model.data'].get_object_reference(
+            #'carrier_partner_id': pool['ir.model.data'].get_object_reference(
             #cr, uid, 'delivery_carrier_colipostefr', 'partner_la_poste')[1],
             'dropoff_type': self._dropoff_type,
         }
@@ -140,8 +140,10 @@ class PartnerDropoffSite(orm.Model):
         print 'start to create', time.ctime()
         import pdb;pdb.set_trace()
         counter_created = 0
-        q1 = "INSERT INTO res_partner (id, active, name, notification_email_send) VALUES (%s, True, ' ', 'none')"
-        q2 = "INSERT INTO partner_dropoff_site (id, dropoff_type, code, partner_id) VALUES (%s, 'colipostefr', %s, %s)"
+        q1 = "INSERT INTO res_partner (id, active, name, "
+        "notification_email_send) VALUES (%s, True, ' ', 'none')"
+        q2 = "INSERT INTO partner_dropoff_site (id, dropoff_type, code, "
+        "partner_id) VALUES (%s, 'colipostefr', %s, %s)"
         q3 = "UPDATE res_partner SET dropoff_site_id = %s WHERE id=%s"
         for code in dropoff_to_create:
             counter_created += 1
@@ -158,14 +160,15 @@ class PartnerDropoffSite(orm.Model):
             original_dropoff[code] = {'id': dropoff_id}
             #print 'created id', dropoff_id
             if counter_created % 100 == 0:
-                print 'commit 100 dropoffsite', counter_created, '\ntime:', time.ctime()
+                print 'commit 100 dropoffsite', counter_created,
+                print '\ntime:', time.ctime()
                 cr.commit()
         cr.commit()
-        import pdb;pdb.set_trace()
         # dropoff update for the whole dropoffs
         fields = ['code', 'city', 'latitude', 'longitude', 'name',
                   'street', 'street2', 'subtype', 'weight', 'zip', 'hashkey']
-        query = "SELECT %s FROM %s WHERE code IN %s " % (', '.join(fields), TEMP_TABLE, dropoff_to_update)
+        query = "SELECT %s FROM %s WHERE code IN %s " \
+                % (', '.join(fields), TEMP_TABLE, dropoff_to_update)
         print 'start to fetch whole data'
         cr.execute(query)
         result = cr.fetchall()
@@ -177,7 +180,8 @@ class PartnerDropoffSite(orm.Model):
             vals = {fields[idx]: val
                     for idx, val in enumerate(res)}
             if vals:
-                self.write(cr, uid, original_dropoff[res[0]]['id'], vals, context=context)
+                self.write(cr, uid, original_dropoff[res[0]]['id'], vals,
+                           context=context)
                 print original_dropoff[res[0]], 'vals', vals
                 print 'writed', time.ctime()
         print 'the end'

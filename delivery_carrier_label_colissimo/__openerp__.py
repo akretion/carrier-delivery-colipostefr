@@ -29,7 +29,7 @@
     'depends': [
         'delivery_carrier_colipostefr',
         'delivery_carrier_deposit',
-        'l10n_fr_intrastat_product',
+        'intrastat_base',
     ],
     'description': """
 Delivery Carrier Label Colissimo
@@ -37,7 +37,8 @@ Delivery Carrier Label Colissimo
 
 Colissimo product only goods in France or in foreign countries
 Delivery address is the customer address.
-For deliveries in dropoff sites see 'Delivery Carrier Label So Colissimo' module
+For deliveries in dropoff sites see 'Delivery Carrier Label So Colissimo'
+module
 
 Description
 -----------
@@ -52,8 +53,11 @@ Company:
 ~~~~~~~~~~
 Some informations have to be filled on two locations :
 
-* company form (Settings > Companies > Companies): complete address of the company, included phone
-* configuration form (Settings > Configuration > Carriers > ColiPoste) : the default test account number is 964744
+* company form (Settings > Companies > Companies):
+complete address of the company, included phone
+
+* configuration form (Settings > Configuration > Carriers > ColiPoste) :
+the default test account number is 964744
 
 
 Sequences:

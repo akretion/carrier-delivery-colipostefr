@@ -8,9 +8,9 @@
 #
 ##############################################################################
 
-import company           # noqa
-import config            # noqa
-import delivery          # noqa
-import file_document     # noqa
-import partner           # noqa
-import stock             # noqa
+from . import company
+from . import config
+from . import delivery
+from . import file_document
+from . import partner
+from . import stock

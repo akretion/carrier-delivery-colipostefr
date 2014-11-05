@@ -1,21 +1,10 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
-#    Author: David BEAL
-#    Copyright 2014 Akretion
-#
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU Affero General Public License as
-#    published by the Free Software Foundation, either version 3 of the
-#    License, or (at your option) any later version.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU Affero General Public License for more details.
-#
-#    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#  licence AGPL version 3 or later
+#  see licence in __openerp__.py or http://www.gnu.org/licenses/agpl-3.0.txt
+#  Copyright (C) 2014 Akretion (http://www.akretion.com).
+#  @author David BEAL <david.beal@akretion.com>
 #
 ##############################################################################
 
@@ -39,7 +28,8 @@ class ResCompany(orm.Model):
         'colipostefr_support_city_code': fields.char(
             'Code Site de Prise en Charge',
             size=6,
-            help="Utile uniquement pour le module colissimo EDI (facultatif cependant)"),
+            help="Utile uniquement pour le module colissimo EDI "
+                 "(facultatif cependant)"),
         'colipostefr_password': fields.char(
             'Mot de passe site web',
             help="Le mot de passe doit être identique "
@@ -64,8 +54,8 @@ class ResCompany(orm.Model):
             help="Liaison à la tâche qui exporte le fichier edi.\n"
                  "Ne pas créer de tâche spécifique ici.\n"
                  "La valeur par défaut pour la principale société d'Odoo "
-                 "ne doit pas changer\n"
-                 "Utilisez une tâche créée depuis le repository 'La Poste Edi'\n"
+                 "ne doit pas changer.\nUtilisez une tâche créée "
+                 "depuis le repository 'La Poste Edi'\n"
                  "(Configuration > File Exchange > File Repositories "
                  "> La Poste Edi)"),
     }

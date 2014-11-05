@@ -21,7 +21,7 @@
 
 {
     'name': 'Delivery Carrier ColiPoste, La Poste fr',
-    'version': '0.2',
+    'version': '0.3',
     'author': 'Akretion',
     'summary': 'Common features for Colissimo & So Colissimo transportation',
     'maintainer': 'Akretion',
@@ -60,8 +60,6 @@ Contributors
 * Sébastien BEAU <sebastien.beau@akretion.com>
 
 ----
-
-*TODO*:
 
 
     """,

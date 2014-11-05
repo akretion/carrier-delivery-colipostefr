@@ -13,12 +13,6 @@ import base64
 from cStringIO import StringIO
 import time
 
-#EXCEPT_LIMIT = 7
-#EXCEPT_MESSAGE = """
-#ERREURS d'insertion Sql dans la table 'partner_tmp_dropoff_coliposte'
-#=========================================================
-#"""
-
 
 class FileDocument(orm.Model):
     _inherit = "file.document"

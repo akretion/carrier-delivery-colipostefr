@@ -1,22 +1,11 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
-#   Copyright (C) 2014 Akretion David BEAL
-#                               Sébastien BEAU
-#
-#   This program is free software: you can redistribute it and/or modify
-#   it under the terms of the GNU Affero General Public License as
-#   published by the Free Software Foundation, either version 3 of the
-#   License, or (at your option) any later version.
-#
-#   This program is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#   GNU Affero General Public License for more details.
-#
-#   You should have received a copy of the GNU Affero General Public License
-#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
+#  licence AGPL version 3 or later
+#  see licence in __openerp__.py or http://www.gnu.org/licenses/agpl-3.0.txt
+#  Copyright (C) 2014 Akretion (http://www.akretion.com).
+#  @author David BEAL <david.beal@akretion.com>
+#          Sébastien BEAU
 ##############################################################################
 
 from openerp.osv import orm, fields
@@ -33,8 +22,8 @@ from laposte_api.exception_helper import (
     InvalidSize,
     InvalidMissingField,
     InvalidCode,
-    InvalidZipCode,
     InvalidCountry,
+    InvalidZipCode,
     InvalidSequence,
     InvalidKeyInTemplate,
     InvalidType)
@@ -72,8 +61,8 @@ def map_except_message(message):
                     "et mot de passe transmis par votre commercial"
                     "\nil est probable que ce dernier"
                     "n'a pas terminé le boulot jusqu'au bout"
-                    "\nVraisemblablement, vous allez passez encore "
-                    "beaucoup de temps à faire la balle de ping pong entre les"
+                    "\nVraisemblablement, vous allez passez encore beaucoup"
+                    "de temps à faire la balle de ping pong entre les"
                     "services: commercial, ADV et Support Intégration Clients."
                     "\nCe dernier est probablement votre meilleur chance."
                     "\nun homme averti en vaut deux"
@@ -157,10 +146,12 @@ class AbstractColipostePicking(orm.AbstractModel):
     """),
         'colipostefr_insur_recomm': fields.selection([
             ('01', '150 €'), ('02', '300 €'), ('03', '450 €'),
-            ('04', '600 €'), ('05', '750 €'), ('06', '900 €'), ('07', '1050 €'),
-            ('08', '1200 €'), ('09', '1350 €'), ('10', '1500 €'),
-            #('21', 'R1'), ('22', 'R2'), ('23', 'R3'),  # TODO Recommandation level
-            ],
+            ('04', '600 €'), ('05', '750 €'), ('06', '900 €'),
+            ('07', '1050 €'), ('08', '1200 €'),
+            ('09', '1350 €'), ('10', '1500 €'),
+            # TODO Recommandation level
+            #('21', 'R1'), ('22', 'R2'), ('23', 'R3'),
+        ],
             'Insurance',
             help="Insurance amount in € (add valorem)"),
         'colipostefr_send_douane_doc': fields.function(
@@ -168,7 +159,8 @@ class AbstractColipostePicking(orm.AbstractModel):
             string='Send douane document',
             type='boolean',
             store=False,
-            help="Define if document CN23 et CN11 should be printed/sent with the parcel"),
+            help="Define if document CN23 et CN11 should be "
+                 "printed/sent with the parcel"),
     }
 
 
@@ -246,17 +238,20 @@ class StockPicking(orm.Model):
                     "'Colissimo and So' Library Error",
                     map_except_message(e.message))
             label_name = pick.carrier_code
-            option = self._prepare_option_postefr(cr, uid, pick, context=context)
+            option = self._prepare_option_postefr(
+                cr, uid, pick, context=context)
             if not france:
                 if not pick.partner_id.country_id \
                         and not pick.partner_id.country_id.code:
                     raise orm.except_orm(
                         "'Colissimo and So' Library Error",
-                        "EI/AI/BE carrier code must have a defined country code")
+                        "EI/AI/BE carrier code must have "
+                        "a defined country code")
             else:
                 sequence = self._get_sequence(
                     cr, uid, label_name, context=context)
-                carrier['carrier_tracking_ref'] = service.get_cab_suivi(sequence)
+                carrier['carrier_tracking_ref'] = service.get_cab_suivi(
+                    sequence)
                 carrier['colipostefr_prise_en_charge'] = \
                     self._barcode_prise_en_charge_generate(
                         cr, uid, service, pick,
@@ -265,11 +260,15 @@ class StockPicking(orm.Model):
                 # write is done 'stock.picking.out' to allow
                 # trigger connector job in projects prestashoperpconnect
                 # and magentoerpconnect
-                self.pool['stock.picking.out'].write(cr, uid, [pick.id], carrier)
+                self.pool['stock.picking.out'].write(
+                    cr, uid, [pick.id], carrier)
                 pick = self.browse(cr, uid, pick.id, carrier)
-            sender = self._prepare_sender_postefr(cr, uid, pick, context=context)
-            delivery = self._prepare_delivery_postefr(cr, uid, pick, context=context)
-            address = self._prepare_address_postefr(cr, uid, pick, context=context)
+            sender = self._prepare_sender_postefr(cr, uid, pick,
+                                                  context=context)
+            delivery = self._prepare_delivery_postefr(cr, uid, pick,
+                                                      context=context)
+            address = self._prepare_address_postefr(cr, uid, pick,
+                                                    context=context)
             label = {
                 'file_type': 'zpl2',
                 'name': pick.name + '.zpl',
@@ -291,7 +290,8 @@ class StockPicking(orm.Model):
                     self.write(cr, uid, [pick.id], carrier)
                     pick = self.browse(cr, uid, ids, context=context)[0]
                     if result[1]:
-                        self._create_comment(cr, uid, pick, result[1], context=None)
+                        self._create_comment(cr, uid, pick, result[1],
+                                             context=None)
                 else:
                     label['file'] = result
                     if config.options.get('debug_mode', True):
@@ -302,6 +302,8 @@ class StockPicking(orm.Model):
                     InvalidWebServiceRequest,
                     InvalidKeyInTemplate,
                     InvalidCountry,
+                    InvalidZipCode,
+                    InvalidSequence,
                     InvalidMissingField) as e:
                 raise_exception(orm, e.message)
             except Exception as e:
@@ -319,7 +321,8 @@ class StockPicking(orm.Model):
         assert len(ids) == 1
         picking = self.browse(cr, uid, ids[0], context=context)
         if picking.carrier_type in ['colissimo', 'so_colissimo']:
-            return self._generate_coliposte_label(cr, uid, ids, picking, context=context)
+            return self._generate_coliposte_label(cr, uid, ids, picking,
+                                                  context=context)
         return super(StockPicking, self).generate_shipping_labels(
             cr, uid, ids, tracking_ids=tracking_ids, context=context)
 
@@ -337,9 +340,12 @@ class StockPicking(orm.Model):
             message = ''
             for mess in messages:
                 if 'type' in mess:
-                    if self._filter_message(cr, uid, mess['type'], context=context):
+                    if self._filter_message(cr, uid, mess['type'],
+                                            context=context):
                         message += '<li>%s %s: %s</li>\n' \
-                                   % (mess['type'], mess['id'], mess['libelle'])
+                                   % (mess['type'],
+                                      mess['id'],
+                                      mess['libelle'])
                 elif isinstance(mess, (str, unicode)):
                     message += unicode(mess)
             if len(message) > 0:
@@ -349,7 +355,8 @@ class StockPicking(orm.Model):
                     'body': mess_title % message,
                     'type': 'comment',
                 }
-                self.pool['mail.message'].create(cr, uid, vals, context=context)
+                self.pool['mail.message'].create(cr, uid, vals,
+                                                 context=context)
         return True
 
     def _get_xmlid(self, cr, uid, id):
@@ -371,7 +378,8 @@ class StockPicking(orm.Model):
         return sequence
 
     def _barcode_prise_en_charge_generate(
-            self, cr, uid, service, picking, carrier_track, option, context=None):
+            self, cr, uid, service, picking, carrier_track, option,
+            context=None):
         """
         :return: the second barcode
         """

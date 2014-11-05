@@ -23,7 +23,7 @@
     'name': 'Delivery Carrier Label So Colissimo',
     'version': '0.3',
     'author': 'Akretion',
-    'summary': "Direct label printing for ColiPoste So Colissimo transportation",
+    'summary': "Direct label printing for ColiPoste So Colissimo carrier",
     'maintainer': 'Akretion',
     'category': 'Warehouse',
     'depends': [
@@ -37,7 +37,9 @@ Carrier label So Colissimo
 Description
 -----------
 
-* Manage So Colissimo labels and reports generation for 'ColisPoste - La Poste - FR'
+* Manage So Colissimo labels and reports generation
+for 'ColisPoste - La Poste - FR'
+
 * Add new delivery methods and zpl reports
 
 So Colissimo specific :
@@ -72,9 +74,6 @@ Contributors
 * David BEAL <david.beal@akretion.com>
 * Sébastien BEAU <sebastien.beau@akretion.com>
 
-----
-
-*TODO*:
 
     """,
     'website': 'http://www.akretion.com/',
@@ -100,4 +99,3 @@ Contributors
         'Python': ['unicodecsv'],
     },
 }
-
