@@ -28,8 +28,7 @@
     'category': 'Warehouse',
     'depends': [
         'partner_helper',
-        'delivery_carrier_b2c',
-        'configuration_helper',
+        #'delivery_carrier_b2c',
         'document',
         'file_repository',
         'delivery_carrier_deposit',
@@ -68,8 +67,8 @@ Contributors
         'data/delivery.xml',
         'data/file_repository.xml',
         'config_view.xml',
-        'stock_view.xml',
-        'deposit_view.xml'
+        #'stock_view.xml',
+        #'deposit_view.xml'
     ],
     'demo': [
         'demo/res.partner.csv',

@@ -16,7 +16,7 @@ from cStringIO import StringIO
 from csv import Dialect
 from _csv import QUOTE_MINIMAL, register_dialect
 import base64
-from tools import DEFAULT_SERVER_DATETIME_FORMAT
+from openerp.tools import misc
 
 # This code is used by Colissimo and So Colissimo
 # TODO this code is not fully updated for So Colissimo
@@ -40,7 +40,7 @@ class DepositSlip(orm.Model):
     def create_header_vals(self, cr, uid, deposit, context=None):
         company = deposit.picking_ids[0].company_id
         create_date = datetime.strptime(deposit.create_date,
-                                        DEFAULT_SERVER_DATETIME_FORMAT)
+                                        misc.DEFAULT_SERVER_DATETIME_FORMAT)
         create_date_format = datetime.strftime(create_date, "%Y%m%d%H%M")
         validate_date = datetime.strftime(datetime.now(), "%Y%m%d%H%M")
         vals = {

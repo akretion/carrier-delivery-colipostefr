@@ -9,9 +9,7 @@
 ##############################################################################
 
 import time
-from report import report_sxw
-from openerp.osv import osv
-import pooler
+from openerp.report import report_sxw
 
 
 class DepositSlipReport(report_sxw.rml_parse):

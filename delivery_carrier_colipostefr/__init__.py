@@ -9,7 +9,7 @@
 ##############################################################################
 
 from . import company
-from . import stock
 from . import config
 from . import deposit_slip
-from . import file_document
+#from . import stock
+#from . import file_document
