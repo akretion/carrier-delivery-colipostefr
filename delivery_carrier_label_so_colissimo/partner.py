@@ -16,6 +16,8 @@ import time
 
 TEMP_TABLE = 'partner_tmp_dropoff_coliposte'
 
+# TODO clean this dirty code
+
 
 def UnicodeDictReader(utf8_data, **kwargs):
     csv_reader = csv.DictReader(utf8_data, **kwargs)

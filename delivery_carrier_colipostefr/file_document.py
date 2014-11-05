@@ -20,8 +20,6 @@ class FileDocument(orm.Model):
             self, cr, uid, connection, filedocument, context=None):
         sent_file = super(FileDocument, self).export_file_document(
             cr, uid, connection, filedocument, context=context)
-        #if crypted file
-        #file_content = "%s.gpg %s PGP" % (document.name, size)
         file_content = "%s %s" % (filedocument.name, filedocument.file_size)
         control_file = TemporaryFile('w+b')
         control_file.write(file_content)

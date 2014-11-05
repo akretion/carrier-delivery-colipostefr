@@ -13,13 +13,16 @@ import base64
 from cStringIO import StringIO
 import time
 
+# TODO clean this dirty code
+
 
 class FileDocument(orm.Model):
     _inherit = "file.document"
 
     def import_datas(self, cr, uid, file_doc, context=None):
         ""
-        super(FileDocument, self).import_datas(cr, uid, file_doc, context=context)
+        super(FileDocument, self).import_datas(cr, uid, file_doc,
+                                               context=context)
         print 'Begin', time.ctime()
         import pdb;pdb.set_trace()
         # TODO manage execption_messages returned by this method

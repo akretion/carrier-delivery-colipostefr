@@ -202,7 +202,7 @@ class StockPicking(orm.Model):
                 opt_key = str(opt.tmpl_option_id['code'].lower())
                 option[opt_key] = True
         if pick.colipostefr_insur_recomm:
-            #TODO improve this mechanism option
+            # TODO improve this mechanism option
             option['insurance'] = pick.colipostefr_insur_recomm
         return option
 

@@ -8,5 +8,5 @@
 #
 ##############################################################################
 
-import deposit_slip     # noqa
-import cn23             # noqa
+from . import deposit_slip
+from . import cn23

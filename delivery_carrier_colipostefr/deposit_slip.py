@@ -17,7 +17,9 @@ from csv import Dialect
 from _csv import QUOTE_MINIMAL, register_dialect
 import base64
 from tools import DEFAULT_SERVER_DATETIME_FORMAT
-#import gnupg   # not mandatory
+
+# This code is used by Colissimo and So Colissimo
+# TODO this code is not fully updated for So Colissimo
 
 
 class LaposteDialect(Dialect):
@@ -46,9 +48,9 @@ class DepositSlip(orm.Model):
             "Identifiant du bordereau": deposit.name,
             "Identifiant du client": company.colipostefr_account,
             "Date expédition": create_date_format,
-            #Important : cette date doit
-            #correspondre à la date réelle de dépôt physique des colis sur
-            #le site d’entrée du trafic et à la date d’émission du fichier EDI.
+            # Important : cette date doit
+            # correspondre à la date réelle de dépôt physique des colis sur
+            # le site d’entrée du trafic et à la date d’émission du fich EDI.
             "Date d'émission du bordereau": validate_date,
             "Version Format Fichier": "02.00",
             "Site Prise en charge": (company.colipostefr_support_city_code
@@ -79,16 +81,16 @@ class DepositSlip(orm.Model):
         for picking in deposit.picking_ids:
             if picking.carrier_code not in ['EI', 'AI']:
                 address = picking.partner_id
-                #TODO
-                #dropoff_site = picking.dropoff_site_id
+                # TODO So Colissimo
+                # dropoff_site = picking.dropoff_site_id
                 non_machi = "N"
-                #TODO
-                #if picking.non_machinable:
-                #    non_machi = "O"
+                # TODO
+                # if picking.non_machinable:
+                #     non_machi = "O"
                 dropoff_code = ''
-                #TODO
-                #if picking.to_dropoff_site:
-                    #dropoff_code = dropoff_site.code
+                # TODO So Colissimo
+                # if picking.to_dropoff_site:
+                    # dropoff_code = dropoff_site.code
                 AR = "N"
                 if picking.carrier_code == "6C":
                     AR = "O"
@@ -106,17 +108,17 @@ class DepositSlip(orm.Model):
                     cr, uid, phone, mobile, context=context)
                 barcode_routage = ""
                 sequence = picking.carrier_tracking_ref[2:-1].replace(' ', '')
-                #TODO
-                #if picking.coliss_barcode_routage:
-                #    cab_label = picking.coliss_barcode_routage.replace(' ', '')[1:]
-                #    cab_content = picking.coliss_barcode_routage.replace(' ', '')[:-1]
-                #    barcode_routage = "%s`%s`%s`%s`%s" % (
-                #        dropoff_site.lot_routing,
-                #        dropoff_site.distri_sort,
-                #        dropoff_site.version_plan,
-                #        cab_label,
-                #        cab_content
-                #    )
+                # TODO So Colissimo
+                # if picking.coliss_barcode_routage:
+                #     cab_label = pick.c_barcode_routage.replace(' ', '')[1:]
+                #     cab_content = pick.c_barcode_routage.replace(' ','')[:-1]
+                #     barcode_routage = "%s`%s`%s`%s`%s" % (
+                #         dropoff_site.lot_routing,
+                #         dropoff_site.distri_sort,
+                #         dropoff_site.version_plan,
+                #         cab_label,
+                #         cab_content
+                #     )
                 country_code = ''
                 if address.country_id:
                     country_code = address.country_id.code
@@ -148,7 +150,7 @@ class DepositSlip(orm.Model):
                     "Accusé réception": AR,
                     "Type de TRI Colis": "NON",
                     "Franc de taxe et de droit": "N",
-                    #TODO
+                    # TODO
                     "Identifiant Colissimo du destinataire": "",
                     "Téléphone": phone,
                     "Courriel": self._coliposte_default_mail(
@@ -163,8 +165,9 @@ class DepositSlip(orm.Model):
                         "L'un des champs suivant ne doit pas être vide:\n"
                         "mobile, phone, email\n"
                         "(sous peine de surtaxation de La Poste)")
-                #'Référence chargeur' field is defined
-                #by delivery_carrier_label_so_colissimo module
+                # TODO  So Colissimo
+                # 'Référence chargeur' field is defined
+                # by delivery_carrier_label_so_colissimo module
                 if deposit.carrier_type == 'so_colissimo':
                     so_colissimo = {
                         'Référence chargeur': picking.company_id.\
@@ -210,13 +213,6 @@ class DepositSlip(orm.Model):
         f.seek(0)
         datas = f.read()
         return datas
-
-    #def create_encrypted_file(self, cr, uid, str_datas, context=None):
-    # NOT mandatory
-    #    gpg = gnupg.GPG(gnupghome='/home/tmp')
-    #    encrypted_datas = gpg.encrypt(str_datas, 'testgpguser@mydomain.com')
-    #    encrypted_string = str(encrypted_datas)
-    #    return encrypted_string
 
     def prepare_doc_vals(self, cr, uid, deposit, name, datas, context=None):
         task = deposit.picking_ids[0].company_id.colipostefr_repo_task_id
