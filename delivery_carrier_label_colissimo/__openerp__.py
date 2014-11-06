@@ -84,7 +84,8 @@ Contributors
         'data/delivery.xml',
         'data/sequence.xml',
         'report/report.xml',
-        'stock_view.xml',
+        'report/cn23.xml',
+        #'stock_view.xml',
     ],
     'tests': [],
     'demo': [

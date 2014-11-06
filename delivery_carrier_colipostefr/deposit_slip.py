@@ -10,6 +10,7 @@
 
 from openerp.osv import orm
 from openerp.tools.translate import _
+from openerp.tools.misc import DEFAULT_SERVER_DATETIME_FORMAT as serv_date_format
 from datetime import datetime
 import unicodecsv
 from cStringIO import StringIO
@@ -76,7 +77,7 @@ class DepositSlip(orm.Model):
         else:
             return ''
 
-    def create_lines_vals(self, cr, uid, deposit, context=None):
+    def create_edi_lines(self, cr, uid, deposit, context=None):
         lines = []
         for picking in deposit.picking_ids:
             if picking.carrier_code not in ['EI', 'AI']:
@@ -87,7 +88,7 @@ class DepositSlip(orm.Model):
                 # TODO
                 # if picking.non_machinable:
                 #     non_machi = "O"
-                dropoff_code = ''
+                dropoff_code = None
                 # TODO So Colissimo
                 # if picking.to_dropoff_site:
                     # dropoff_code = dropoff_site.code
@@ -165,21 +166,30 @@ class DepositSlip(orm.Model):
                         "L'un des champs suivant ne doit pas être vide:\n"
                         "mobile, phone, email\n"
                         "(sous peine de surtaxation de La Poste)")
-                # TODO  So Colissimo
-                # 'Référence chargeur' field is defined
-                # by delivery_carrier_label_so_colissimo module
-                if deposit.carrier_type == 'so_colissimo':
-                    so_colissimo = {
-                        'Référence chargeur': picking.company_id.\
-                        colipostefr_account_chargeur,
-                        "Code porte": address.door_code or "",
-                        "Code porte 2": address.door_code2 or "",
-                        "Interphone": address.intercom or "",
-                        "Identifiant du point de retrait": dropoff_code or "",
-                    }
-                    vals.update(so_colissimo)
+                vals.update(
+                    self._complete_edi_lines(
+                        cr, uid, picking, deposit, address, dropoff_code,
+                        context=context)
+                )
                 lines.append(vals)
         return lines
+
+    def _complete_edi_lines(self, cr, uid, picking, deposit, address,
+                            dropoff_code, context=None):
+        # TODO move to so_colissimo module
+        # don't forget to split demo/res_partner.csv field before
+        # to drop dependency on 'delivery_carrier_b2c' module
+        values = {}
+        if deposit.carrier_type == 'so_colissimo':
+            values = {
+                'Référence chargeur': picking.company_id.\
+                colipostefr_account_chargeur,
+                "Code porte": address.door_code or "",
+                "Code porte 2": address.door_code2 or "",
+                "Interphone": address.intercom or "",
+                "Identifiant du point de retrait": dropoff_code or "",
+            }
+        return values
 
     def create_csv(self, cr, uid, header, lines, context=None):
         f = StringIO()
@@ -235,8 +245,7 @@ class DepositSlip(orm.Model):
             self, cr, uid, header, lines, deposit, context=None):
         document_obj = self.pool['file.document']
         company = deposit.picking_ids[0].company_id
-        create_date = datetime.strptime(deposit.create_date,
-                                        DEFAULT_SERVER_DATETIME_FORMAT)
+        create_date = datetime.strptime(deposit.create_date, serv_date_format)
         create_date_format = datetime.strftime(create_date, "%Y%m%d.%H%M")
         name = "%s.%s" % (company.colipostefr_account, create_date_format)
         unencrypted_string = self.create_csv(
@@ -255,7 +264,7 @@ class DepositSlip(orm.Model):
             if deposit.carrier_type in ('colissimo', 'so_colissimo'):
                 header = self.create_header_vals(
                     cr, uid, deposit, context=context)
-                lines = self.create_lines_vals(
+                lines = self.create_edi_lines(
                     cr, uid, deposit, context=context)
                 if lines:
                     document_ids = self.create_file_document(

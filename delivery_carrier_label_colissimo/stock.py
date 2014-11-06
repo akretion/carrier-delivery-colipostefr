@@ -15,24 +15,21 @@ from .code128 import code128_image
 
 
 class StockPicking(orm.Model):
-    _inherit = ['stock.picking', 'abstract.coliposte.picking']
-    _name = 'stock.picking'
+    _inherit = 'stock.picking'
 
     def action_done(self, cr, uid, ids, context=None):
+    #def do_enter_transfer_details(self, cr, uid, ids, context=None):
         """
         :return: see original method
         """
         if context is None:
             context = {}
+        import pdb;pdb.set_trace()
         for picking in self.browse(cr, uid, ids, context=context):
             if picking.carrier_type == 'colissimo':
                 self.generate_labels(cr, uid, [picking.id], context=context)
         return super(StockPicking, self).action_done(
             cr, uid, ids, context=context)
-
-
-class StockPickingOut(orm.Model):
-    _inherit = 'stock.picking.out'
 
     def get_128_barcode(self, cr, uid, ids, context=None):
         assert len(ids) == 1, \

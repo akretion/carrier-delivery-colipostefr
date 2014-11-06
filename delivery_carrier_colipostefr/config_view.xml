@@ -60,7 +60,7 @@
   <field name="type">ir.actions.act_window</field>
   <field name="res_model">colipostefr.config.settings</field>
   <field name="view_mode">form</field>
-  <field name="name">action_colipostefr_config</field>
+  <field name="name">ColiPoste configuration</field>
   <field name="target">inline</field>
 </record>
 

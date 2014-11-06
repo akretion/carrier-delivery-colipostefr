@@ -28,7 +28,9 @@
     'category': 'Warehouse',
     'depends': [
         'partner_helper',
-        #'delivery_carrier_b2c',
+        # remove delivery_carrier_b2c dependency: carefull to
+        # _complete_edi_lines() in deposit_slip.py
+        'delivery_carrier_b2c',
         'document',
         'file_repository',
         'delivery_carrier_deposit',

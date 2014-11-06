@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (C) 2014 Akretion
+  The licence is in the file __openerp__.py
+-->
+
+<openerp>
+<data>
+
+<template id="report_tpl_coliposte_cn23">
+
+<t t-call="report.html_container">
+<t t-call="report.internal_layout">
+
+<div class="page">
+
+<t t-foreach="docs" t-as="o">
+
+<h1>DECLARATION EN DOUANE CN23</h1>
+
+    <table class="table table-condensed">
+    <thead>
+        <tr>
+            <th>bla bla</th>
+        </tr>
+    </thead>
+    <tbody>
+
+
+    </tbody>
+    </table>
+</t>
+</div>
+
+</t>
+</t>
+
+</template>
+
+</data>
+</openerp>

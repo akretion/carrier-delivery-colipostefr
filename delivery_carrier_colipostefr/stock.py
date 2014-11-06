@@ -100,9 +100,8 @@ def modify_label_content(content):
     return content
 
 
-class AbstractColipostePicking(orm.AbstractModel):
-    _name = 'abstract.coliposte.picking'
-    _description = "Abstract Coliposte"
+class StockPicking(orm.Model):
+    _inherit = 'stock.picking'
 
     def send_douane_doc(self, cr, uid, ids, field_n, arg, context=None):
         result = {}
@@ -163,11 +162,6 @@ class AbstractColipostePicking(orm.AbstractModel):
                  "printed/sent with the parcel"),
     }
 
-
-class StockPicking(orm.Model):
-    _inherit = ['stock.picking', 'abstract.coliposte.picking']
-    _name = 'stock.picking'
-
     def _prepare_address_postefr(self, cr, uid, pick, context=None):
         address = {}
         for elm in ['name', 'city', 'zip', 'phone', 'mobile']:
@@ -207,7 +201,7 @@ class StockPicking(orm.Model):
         return option
 
     def _prepare_sender_postefr(self, cr, uid, pick, context=None):
-        partner = self.pool['stock.picking.out']._get_label_sender_address(
+        partner = self.pool['stock.picking']._get_label_sender_address(
             cr, uid, pick, context=context)
         sender = {'support_city': pick.company_id.colipostefr_support_city,
                   'password': pick.company_id.colipostefr_password}
@@ -257,10 +251,7 @@ class StockPicking(orm.Model):
                         cr, uid, service, pick,
                         carrier['carrier_tracking_ref'],
                         option, context=context)
-                # write is done 'stock.picking.out' to allow
-                # trigger connector job in projects prestashoperpconnect
-                # and magentoerpconnect
-                self.pool['stock.picking.out'].write(
+                self.pool['stock.picking'].write(
                     cr, uid, [pick.id], carrier)
                 pick = self.browse(cr, uid, pick.id, carrier)
             sender = self._prepare_sender_postefr(cr, uid, pick,
@@ -399,11 +390,6 @@ class StockPicking(orm.Model):
                 raise_exception(orm, e.message)
         return barcode
 
-
-class StockPickingOut(orm.Model):
-    _inherit = ['stock.picking.out', 'abstract.coliposte.picking']
-    _name = 'stock.picking.out'
-
     def copy(self, cr, uid, id, default=None, context=None):
         if default is None:
             default = {}
@@ -412,15 +398,11 @@ class StockPickingOut(orm.Model):
             'carrier_tracking_ref': None,
             'colipostefr_prise_en_charge': None,
         })
-        return super(StockPickingOut, self).copy(
+        return super(StockPicking, self).copy(
             cr, uid, id, default, context=context)
 
     def get_shipping_cost(self, cr, uid, ids, context=None):
         return 0
-
-
-class StockPickingIn(orm.Model):
-    _inherit = 'stock.picking.in'
 
     def action_generate_carrier_label(self, cr, uid, ids, context=None):
         raise orm.except_orm(
