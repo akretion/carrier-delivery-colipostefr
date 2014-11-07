@@ -17,18 +17,16 @@ from .code128 import code128_image
 class StockPicking(orm.Model):
     _inherit = 'stock.picking'
 
-    def action_done(self, cr, uid, ids, context=None):
-    #def do_enter_transfer_details(self, cr, uid, ids, context=None):
+    def do_transfer(self, cr, uid, ids, context=None):
         """
         :return: see original method
         """
         if context is None:
             context = {}
-        import pdb;pdb.set_trace()
         for picking in self.browse(cr, uid, ids, context=context):
             if picking.carrier_type == 'colissimo':
                 self.generate_labels(cr, uid, [picking.id], context=context)
-        return super(StockPicking, self).action_done(
+        return super(StockPicking, self).do_transfer(
             cr, uid, ids, context=context)
 
     def get_128_barcode(self, cr, uid, ids, context=None):

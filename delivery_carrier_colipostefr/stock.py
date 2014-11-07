@@ -11,7 +11,7 @@
 from openerp.osv import orm, fields
 from openerp.tools.config import config
 from openerp.tools.translate import _
-
+from openerp.tools import DEFAULT_SERVER_DATETIME_FORMAT
 from laposte_api.colissimo_and_so import (
     ColiPoste,
     InvalidDataForMako,
@@ -28,9 +28,12 @@ from laposte_api.exception_helper import (
     InvalidKeyInTemplate,
     InvalidType)
 
-from datetime import date
+from datetime import datetime
+#from operator import attrgetter
 
 EXCEPT_TITLE = "'Colissimo and So' library Exception"
+LABEL_TYPE = 'zpl2'
+PACK_NUMBER = 0
 
 
 def raise_exception(orm, message):
@@ -175,19 +178,24 @@ class StockPicking(orm.Model):
             address['countryCode'] = pick.partner_id.country_id.code
         return address
 
-    def _prepare_delivery_postefr(self, cr, uid, pick, context=None):
-        today = date.today().strftime('%d/%m/%Y')
-        params = {
+    def _prepare_delivery_postefr(self, cr, uid, pick, number_of_packages,
+                                  context=None):
+        shipping_date = pick.min_date
+        if pick.date_done:
+            shipping_date = pick.date_done
+        shipping_date = datetime.strptime(
+            shipping_date, DEFAULT_SERVER_DATETIME_FORMAT)
+        delivery = {
             'ref_client': pick.name,
-            'weight': pick.weight,
-            'date': today,
+            'date': shipping_date.strftime('%d/%m/%Y'),
+            'parcel_total_number': number_of_packages,
         }
-        if pick.carrier_code not in ['EI', 'AI', 'SO']:
-            params.update({
-                'cab_prise_en_charge': pick.colipostefr_prise_en_charge,
-                'cab_suivi': pick.carrier_tracking_ref,
-            })
-        return params
+        #if pick.carrier_code not in ['EI', 'AI', 'SO']:
+        #    delivery.update({
+        #        'cab_prise_en_charge': pick.colipostefr_prise_en_charge,
+        #        'cab_suivi': pick.carrier_tracking_ref,
+        #    })
+        return delivery
 
     def _prepare_option_postefr(self, cr, uid, pick, context=None):
         option = {}
@@ -215,12 +223,196 @@ class StockPicking(orm.Model):
             sender['chargeur'] = pick.company_id.colipostefr_account_chargeur
         return sender
 
-    def _generate_coliposte_label(self, cr, uid, ids, pick, context=None):
-        if pick.carrier_code:
-            france = True
-            if pick.carrier_code in ['EI', 'AI', 'SO']:
-                france = False
-            carrier = {}
+    def _get_packages_from_moves(self, cr, uid, picking, context=None):
+        """ get all the packages of the picking
+            no tracking_id will return a False (Browse Null), meaning that
+            we want a label for the picking
+        """
+        move_ids = [move.id for move in picking.move_lines]
+        moves = [move for move in picking.move_lines]
+        packages = []
+        moves_with_no_pack = []
+        moves_with_pack = []
+        move_ope_m = self.pool['stock.move.operation.link']
+        move_ope_ids = move_ope_m.search(
+            cr, uid, [('move_id', 'in', move_ids)], context=context)
+        for move_ope in move_ope_m.browse(
+                cr, uid, move_ope_ids, context=context):
+            if move_ope.operation_id.result_package_id:
+                packages.append(move_ope.operation_id.result_package_id)
+                moves_with_pack.append(move_ope.move_id)
+        moves_with_no_pack = set(moves) - set(moves_with_pack)
+        if not packages:
+            packages.append(False)
+        return (packages, list(moves_with_no_pack))
+
+    def _prepare_pack_postefr(
+            self, cr, uid, packing, picking, option, service, france,
+            weight=None, context=None):
+        global PACK_NUMBER
+        pack = {}
+        PACK_NUMBER += 1
+        if france:
+            sequence = self._get_sequence(
+                cr, uid, picking.carrier_code, context=context)
+            #pack['carrier_tracking_ref'] = service.get_cab_suivi(
+            pack['cab_suivi'] = service.get_cab_suivi(
+                sequence)
+            #pack['colipostefr_prise_en_charge'] = \
+            pack['cab_prise_en_charge'] = \
+                self._barcode_prise_en_charge_generate(
+                    cr, uid, service, picking,
+                    pack['cab_suivi'],
+                    option, context=context)
+        pack.update({
+            'parcel_number': PACK_NUMBER,
+            'weight': 1,
+            })
+        #if weight:
+        #    pack.update({
+        #        'weight': "{0:05.2f}".format(weight),
+        #        })
+        #else:
+        #    if tracking.move_ids:
+        #        tracking_weight = [move.weight
+        #                           for move in tracking.move_ids][0]
+        #        pack.update({
+        #            'weight': "{0:05.2f}".format(tracking_weight),
+        #            })
+        return pack
+
+    def _generate_coliposte_label(
+            self, cr, uid, picking, service, sender, address, france, option,
+            package_ids=None, context=None):
+        """ Generate labels and write package numbers received """
+        global PACK_NUMBER
+        PACK_NUMBER = 0
+        carrier = {}
+        label_info = {
+             #'tracking_id': packing.id if packing else False,
+             #'file': label['content'],
+             'file_type': LABEL_TYPE,
+         }
+        pick2update = {}
+        if package_ids is None:
+            packages, moves_with_no_pack = self._get_packages_from_moves(
+                cr, uid, picking, context=context)
+        else:
+            # restrict on the provided packages
+            packages = self.pool['stock.quant.package'].browse(
+                cr, uid, package_ids, context=context)
+        labels = []
+        without_pack = 0
+        for pack in packages:
+            if not pack:
+                without_pack += 1
+        pick2update['number_of_packages'] = len(packages) - without_pack + 1
+        delivery = self._prepare_delivery_postefr(
+            cr, uid, picking, pick2update['number_of_packages'],
+            context=context)
+        # Write packing_number on serial field
+        # for move lines with package
+        # and on picking for other moves
+        for packing in packages:
+            addr = address.copy()
+            deliv = delivery.copy()
+            if not packing:
+                without_pack -= 1
+                if without_pack > 0:
+                    continue
+                # only executed for the last move line with no package
+                weight = sum([move.weight for move in moves_with_no_pack])
+                pack = self._prepare_pack_postefr(
+                    cr, uid, packing, picking, option, service, france,
+                    weight=weight, context=context)
+                print '\n   pack from not packing', pack
+                deliv.update(pack)
+                label = self.get_zpl(service, sender, deliv, addr, option)
+                #pick2update['carrier_tracking_ref'] = label['tracking_number']
+            else:
+                pack = self._prepare_pack_postefr(
+                    cr, uid, packing, picking, option, service, france,
+                    context=context)
+                print '\n       pack from REAL packing', pack
+                deliv.update(pack)
+                label = self.get_zpl(service, sender, deliv, addr, option)
+                #packing.write({'serial': label['tracking_number']})
+
+            label_info.update({
+                #'tracking_id': packing.id if packing else False,
+                #'file': label['content'],
+                'name': '%s.zpl' % deliv['cab_suivi'].replace(' ', ''),
+            })
+                ## uncomment the line below to record a new test unit
+                ## based on picking datas
+                #if pick.company_id.colipostefr_unittest_helper and france:
+                #    test_id = self._get_xmlid(cr, uid, pick.id) or 'tmp'
+                #    service._set_unit_test_file_name(
+                #        test_id, sequence, carrier['carrier_tracking_ref'],
+                #        carrier['colipostefr_prise_en_charge'])
+
+                #if label['tracking_number']:
+                #    label_info['name'] = '%s%s.zpl' % (label['tracking_number'],
+                #                                       label['filename'])
+            if picking.carrier_code in ['EI', 'AI', 'SO']:
+                label_info['file'] = modify_label_content(label[0])
+                carrier['carrier_tracking_ref'] = label[2]
+                carrier['colipostefr_prise_en_charge'] = label[3]
+                self.write(cr, uid, [picking.id], carrier)
+                picking = self.browse(cr, uid, picking.id, context=context)
+                if label[1]:
+                    self._create_comment(cr, uid, picking, label[1],
+                                         context=None)
+            else:
+                label_info['file'] = label
+                #if config.options.get('debug_mode', True):
+                     ##get file datas in clipboard for paste in zebra viewer
+                    #service._copy2clipboard(label['file'])
+            labels.append(label_info)
+        self.write(cr, uid, picking.id, pick2update, context=context)
+        picking = self.browse(cr, uid, picking.id, context=context)
+        self._customize_postefr_picking(cr, uid, picking, context=context)
+        return labels
+
+    def get_zpl(self, service, sender, delivery, address, option):
+        try:
+            result = service.get_label(sender, delivery, address, option)
+        except (InvalidMissingField,
+                InvalidDataForMako,
+                #InvalidValueNotInList,
+                #InvalidAccountNumber,
+                InvalidKeyInTemplate,
+                InvalidWebServiceRequest,
+                InvalidKeyInTemplate,
+                InvalidCountry,
+                InvalidZipCode,
+                InvalidSequence,
+                InvalidType) as e:
+            raise_exception(orm, e.message)
+        except Exception as e:
+            if config.options.get('debug_mode', False):
+                raise
+            else:
+                raise orm.except_orm(
+                    "'Colissimo and So' Library Error", e.message)
+        return result
+
+    def _customize_postefr_picking(self, cr, uid, picking, context=None):
+        "Use this method to override gls picking"
+        return True
+
+    def generate_shipping_labels(self, cr, uid, ids, package_ids=None,
+                                 context=None):
+        if isinstance(ids, (long, int)):
+            ids = [ids]
+        assert len(ids) == 1
+        pick = self.browse(cr, uid, ids[0], context=context)
+        if pick.carrier_type in ['colissimo', 'so_colissimo']:
+            if not pick.carrier_code:
+                raise orm.except_orm(
+                    _("Carrier code missing"),
+                    _("'Carrier code' is missing in '%s' delivery method"
+                      % pick.carrier_type))
             try:
                 account = pick.company_id.colipostefr_account
                 service = ColiPoste(account).get_service(
@@ -231,9 +423,15 @@ class StockPicking(orm.Model):
                 raise orm.except_orm(
                     "'Colissimo and So' Library Error",
                     map_except_message(e.message))
-            label_name = pick.carrier_code
+            france = True
+            if pick.carrier_code in ['EI', 'AI', 'SO']:
+                france = False
             option = self._prepare_option_postefr(
                 cr, uid, pick, context=context)
+            sender = self._prepare_sender_postefr(cr, uid, pick,
+                                                  context=context)
+            address = self._prepare_address_postefr(cr, uid, pick,
+                                                    context=context)
             if not france:
                 if not pick.partner_id.country_id \
                         and not pick.partner_id.country_id.code:
@@ -241,81 +439,11 @@ class StockPicking(orm.Model):
                         "'Colissimo and So' Library Error",
                         "EI/AI/BE carrier code must have "
                         "a defined country code")
-            else:
-                sequence = self._get_sequence(
-                    cr, uid, label_name, context=context)
-                carrier['carrier_tracking_ref'] = service.get_cab_suivi(
-                    sequence)
-                carrier['colipostefr_prise_en_charge'] = \
-                    self._barcode_prise_en_charge_generate(
-                        cr, uid, service, pick,
-                        carrier['carrier_tracking_ref'],
-                        option, context=context)
-                self.pool['stock.picking'].write(
-                    cr, uid, [pick.id], carrier)
-                pick = self.browse(cr, uid, pick.id, carrier)
-            sender = self._prepare_sender_postefr(cr, uid, pick,
-                                                  context=context)
-            delivery = self._prepare_delivery_postefr(cr, uid, pick,
-                                                      context=context)
-            address = self._prepare_address_postefr(cr, uid, pick,
-                                                    context=context)
-            label = {
-                'file_type': 'zpl2',
-                'name': pick.name + '.zpl',
-            }
-            try:
-                # uncomment the line below to record a new test unit
-                # based on picking datas
-                if pick.company_id.colipostefr_unittest_helper and france:
-                    test_id = self._get_xmlid(cr, uid, pick.id) or 'tmp'
-                    service._set_unit_test_file_name(
-                        test_id, sequence, carrier['carrier_tracking_ref'],
-                        carrier['colipostefr_prise_en_charge'])
-                result = service.get_label(
-                    sender, delivery, address, option)
-                if pick.carrier_code in ['EI', 'AI', 'SO']:
-                    label['file'] = modify_label_content(result[0])
-                    carrier['carrier_tracking_ref'] = result[2]
-                    carrier['colipostefr_prise_en_charge'] = result[3]
-                    self.write(cr, uid, [pick.id], carrier)
-                    pick = self.browse(cr, uid, ids, context=context)[0]
-                    if result[1]:
-                        self._create_comment(cr, uid, pick, result[1],
-                                             context=None)
-                else:
-                    label['file'] = result
-                    if config.options.get('debug_mode', True):
-                        # get file datas in clipboard for paste in zebra viewer
-                        service._copy2clipboard(label['file'])
-            except (InvalidDataForMako,
-                    InvalidKeyInTemplate,
-                    InvalidWebServiceRequest,
-                    InvalidKeyInTemplate,
-                    InvalidCountry,
-                    InvalidZipCode,
-                    InvalidSequence,
-                    InvalidMissingField) as e:
-                raise_exception(orm, e.message)
-            except Exception as e:
-                if config.options.get('debug_mode', False):
-                    raise
-                else:
-                    raise orm.except_orm(
-                        "'Colissimo and So' Library Error", e.message)
-        return [label]
-
-    def generate_shipping_labels(self, cr, uid, ids, tracking_ids=None,
-                                 context=None):
-        if isinstance(ids, (long, int)):
-            ids = [ids]
-        assert len(ids) == 1
-        picking = self.browse(cr, uid, ids[0], context=context)
-        if picking.carrier_type in ['colissimo', 'so_colissimo']:
-            return self._generate_coliposte_label(cr, uid, ids, picking,
-                                                  context=context)
+            return self._generate_coliposte_label(
+                cr, uid, pick, service, sender, address, france, option,
+                package_ids=package_ids, context=context)
         return super(StockPicking, self).generate_shipping_labels(
-            cr, uid, ids, tracking_ids=tracking_ids, context=context)
+            cr, uid, ids, package_ids=package_ids, context=context)
 
     def _filter_message(self, cr, uid, mess_type, context=None):
         """ Allow to exclude returned message according their type.
