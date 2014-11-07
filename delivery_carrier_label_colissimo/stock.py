@@ -18,15 +18,21 @@ class StockPicking(orm.Model):
     _inherit = 'stock.picking'
 
     def do_transfer(self, cr, uid, ids, context=None):
+        """ Used by wizard stock_tranfert_details and js interface
         """
-        :return: see original method
-        """
-        if context is None:
-            context = {}
         for picking in self.browse(cr, uid, ids, context=context):
             if picking.carrier_type == 'colissimo':
                 self.generate_labels(cr, uid, [picking.id], context=context)
         return super(StockPicking, self).do_transfer(
+            cr, uid, ids, context=context)
+
+    def action_done(self, cr, uid, ids, context=None):
+        """ Used by stock_picking_wave
+        """
+        for picking in self.browse(cr, uid, ids, context=context):
+            if picking.carrier_type == 'colissimo':
+                self.generate_labels(cr, uid, [picking.id], context=context)
+        return super(StockPicking, self).action_done(
             cr, uid, ids, context=context)
 
     def get_128_barcode(self, cr, uid, ids, context=None):
