@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
-    <data noupdate="1">
+    <data noupdate="0">
 
 
 <!-- DELIVERY CARRIER TEMPLATE OPTION -->
@@ -21,6 +21,7 @@
     <field name="name">9L, Colissimo Access</field>
     <field name="type">colissimo</field>
     <field name="code">9L</field>
+    <field name="deposit_slip" eval="True"/>
     <field name="partner_id" ref="delivery_carrier_colipostefr.partner_la_poste"/>
     <field name="product_id" ref="delivery_carrier_colipostefr.product_product_la_poste"/>
 </record>
@@ -37,6 +38,7 @@
     <field name="name">9V, Colissimo Expert France</field>
     <field name="type">colissimo</field>
     <field name="code">9V</field>
+    <field name="deposit_slip" eval="True"/>
     <field name="partner_id" ref="delivery_carrier_colipostefr.partner_la_poste"/>
     <field name="product_id" ref="delivery_carrier_colipostefr.product_product_la_poste"/>
 </record>
@@ -53,6 +55,7 @@
     <field name="name">8Q, Colissimo Access OM</field>
     <field name="type">colissimo</field>
     <field name="code">8Q</field>
+    <field name="deposit_slip" eval="True"/>
     <field name="partner_id" ref="delivery_carrier_colipostefr.partner_la_poste"/>
     <field name="product_id" ref="delivery_carrier_colipostefr.product_product_la_poste"/>
 </record>
@@ -69,6 +72,7 @@
     <field name="name">7Q, Colissimo Expert OM</field>
     <field name="type">colissimo</field>
     <field name="code">7Q</field>
+    <field name="deposit_slip" eval="True"/>
     <field name="partner_id" ref="delivery_carrier_colipostefr.partner_la_poste"/>
     <field name="product_id" ref="delivery_carrier_colipostefr.product_product_la_poste"/>
 </record>
@@ -111,16 +115,6 @@
     <field name="carrier_id" ref="delivery_carrier_EI"/>
     <field name="tmpl_option_id" ref="delivery_carrier_colipostefr.delivery_carrier_template_NM"/>
 </record>
-
-<!--
-Defined in specs but this option is not accepted by webservice
-<record id="I_delivery_carrier_template_AR" model="delivery.carrier.option">
-    <field name="mandatory" eval="False"/>
-    <field name="by_default" eval="True"/>
-    <field name="carrier_id" ref="delivery_carrier_EI"/>
-    <field name="tmpl_option_id" ref="delivery_carrier_template_AR"/>
-</record>
--->
 
     </data>
 </openerp>
