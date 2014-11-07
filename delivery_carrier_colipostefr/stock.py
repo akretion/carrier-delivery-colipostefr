@@ -170,9 +170,9 @@ class StockPicking(orm.Model):
         for elm in ['name', 'city', 'zip', 'phone', 'mobile']:
             address[elm] = pick.partner_id[elm]
         # 3 is the number of fields street
-        # 35 is the field street max length
+        # 38 is the field street max length
         res = self.pool['res.partner']._get_split_address(
-            cr, uid, pick.partner_id, 3, 35, context=context)
+            cr, uid, pick.partner_id, 3, 38, context=context)
         address['street'], address['street2'], address['street3'] = res
         if pick.partner_id.country_id.code and pick.partner_id.country_id.code:
             address['countryCode'] = pick.partner_id.country_id.code

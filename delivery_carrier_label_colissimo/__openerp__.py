@@ -87,6 +87,11 @@ Contributors
         'report/cn23.xml',
         #'stock_view.xml',
     ],
+    'external_dependencies': {
+        'python': [
+            'PIL',
+            ],
+    },
     'tests': [],
     'demo': [
         'demo/stock.picking.csv',

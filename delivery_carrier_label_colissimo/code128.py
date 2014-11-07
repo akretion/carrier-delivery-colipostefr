@@ -14,8 +14,8 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE
 
-import Image
-import ImageDraw
+from PIL import Image
+from PIL import ImageDraw
 from base64 import encodestring
 from StringIO import StringIO
 
