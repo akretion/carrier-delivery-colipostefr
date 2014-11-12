@@ -81,6 +81,7 @@ Contributors
         'data/delivery.xml',
         'data/sequence.xml',
         'config_view.xml',
+        'partner_view.xml',
     ],
     'demo': [
         'demo/deposit_slip_demo.xml',
