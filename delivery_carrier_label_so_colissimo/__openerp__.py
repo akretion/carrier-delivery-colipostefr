@@ -87,7 +87,7 @@ Contributors
         'demo/deposit_slip_demo.xml',
         'demo/partner.dropoff.site.csv',
         #TODO : to fix
-        'demo/partner.dropoff.site.csv',
+        #'demo/partner.dropoff.site.csv',
         'demo/stock.picking.csv',
         'demo/stock.move.csv',
     ],
