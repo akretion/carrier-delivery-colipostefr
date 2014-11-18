@@ -240,6 +240,8 @@ class StockPicking(orm.Model):
             label_name = pick.carrier_code
             option = self._prepare_option_postefr(
                 cr, uid, pick, context=context)
+            address = self._prepare_address_postefr(cr, uid, pick,
+                                                    context=context)
             if not france:
                 if not pick.partner_id.country_id \
                         and not pick.partner_id.country_id.code:
@@ -254,7 +256,7 @@ class StockPicking(orm.Model):
                     sequence)
                 carrier['colipostefr_prise_en_charge'] = \
                     self._barcode_prise_en_charge_generate(
-                        cr, uid, service, pick,
+                        cr, uid, service, pick, address,
                         carrier['carrier_tracking_ref'],
                         option, context=context)
                 # write is done 'stock.picking.out' to allow
@@ -267,8 +269,6 @@ class StockPicking(orm.Model):
                                                   context=context)
             delivery = self._prepare_delivery_postefr(cr, uid, pick,
                                                       context=context)
-            address = self._prepare_address_postefr(cr, uid, pick,
-                                                    context=context)
             label = {
                 'file_type': 'zpl2',
                 'name': pick.name + '.zpl',
@@ -378,7 +378,7 @@ class StockPicking(orm.Model):
         return sequence
 
     def _barcode_prise_en_charge_generate(
-            self, cr, uid, service, picking, carrier_track, option,
+            self, cr, uid, service, picking, address, carrier_track, option,
             context=None):
         """
         :return: the second barcode
@@ -392,6 +392,8 @@ class StockPicking(orm.Model):
                 'weight': picking.weight,
                 'carrier_track': carrier_track,
             }
+            if '_specific_label' in address:
+                infos['_specific_label'] = True
             infos.update(option)
             try:
                 barcode = service.get_cab_prise_en_charge(infos)

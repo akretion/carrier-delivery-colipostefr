@@ -116,6 +116,7 @@ class StockPicking(orm.Model):
                     'lot_routing': dropoff.lot_routing,
                     'distri_sort': dropoff.distri_sort,
                 })
+                address['_specific_label'] = True
         return address
 
     def _prepare_address_postefr(self, cr, uid, pick, context=None):
@@ -131,7 +132,6 @@ class StockPicking(orm.Model):
             final_address = self._partner_data_postefr(
                 cr, uid, pick.final_partner_id, max_street_size,
                 context=context)
-            # TODO define if it needs to check
             address['final_address'] = final_address
         else:
             address['final_address'] = address
