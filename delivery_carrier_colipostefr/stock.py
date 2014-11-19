@@ -221,7 +221,7 @@ class StockPicking(orm.Model):
             sender['chargeur'] = pick.company_id.colipostefr_account_chargeur
         return sender
 
-    def _get_account(self, cr, uid, ids, pick, france, context=None):
+    def _get_account(self, cr, uid, pick, france, context=None):
         account = pick.company_id.colipostefr_account
         if not france:
             return pick.company_id.colipostefr_world_account or account
