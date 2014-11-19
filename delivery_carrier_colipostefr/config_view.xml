@@ -31,6 +31,7 @@
       <separator string="Compte"/>
       <group name="account" col="4">
         <field name="account" placeholder="800000" class="oe_inline"/>
+        <field name="world_account" placeholder="800000" class="oe_inline"/>
         <field name="support_city" placeholder="... PFC" class="oe_inline"/>
         <field name="password" password="True" class="oe_inline"/>
         <field name="support_city_code" placeholder="700000" class="oe_inline"/>

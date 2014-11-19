@@ -16,10 +16,17 @@ class ResCompany(orm.Model):
 
     _columns = {
         'colipostefr_account': fields.char(
-            'Compte',
+            'Compte Principal',
             size=6,
             help="Nombre à 6 caractères.\n"
                  "La valeur par défaut est 964744"),
+        'colipostefr_world_account': fields.char(
+            'Compte International',
+            size=6,
+            help="Nombre à 6 caractères.\n"
+                 "La valeur par défaut est 964744\n"
+                 "Potentiellement c'est le même N° que le compte principal."
+                 "Dans ce cas, vous pouvez laisser ce champ vide."),
         'colipostefr_support_city': fields.char(
             'Site de Prise en Charge',
             size=64,
