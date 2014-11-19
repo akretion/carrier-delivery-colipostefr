@@ -267,16 +267,16 @@ class StockPicking(orm.Model):
             'pack_number': PACK_NUMBER,
             'weight': 1,
             })
-        #if weight:
-        #    pack.update({
-        #        'weight': "{0:05.2f}".format(weight),
-        #        })
+        if weight:
+            pack.update({
+                'weight': weight,
+                })
         #else:
         #    if tracking.move_ids:
         #        tracking_weight = [move.weight
         #                           for move in tracking.move_ids][0]
         #        pack.update({
-        #            'weight': "{0:05.2f}".format(tracking_weight),
+        #            'weight': tracking_weight,
         #            })
         return pack
 
