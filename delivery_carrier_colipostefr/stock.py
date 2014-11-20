@@ -270,7 +270,7 @@ class StockPicking(orm.Model):
         if weight:
             pack.update({
                 'weight': weight,
-                })
+            })
         #else:
         #    if tracking.move_ids:
         #        tracking_weight = [move.weight
@@ -297,6 +297,11 @@ class StockPicking(orm.Model):
         if package_ids is None:
             packages, moves_with_no_pack = self._get_packages_from_moves(
                 cr, uid, picking, context=context)
+            #if moves_with_no_pack:
+            #    raise orm.except_orm(
+            #        "Exception: ",
+            #        "Pour ce transporteur tous les produits à livrer "
+            #        "doivent être dans des packages")
         else:
             # restrict on the provided packages
             packages = self.pool['stock.quant.package'].browse(
@@ -382,8 +387,8 @@ class StockPicking(orm.Model):
                     #service._copy2clipboard(label['file'])
             print 'namef', label_info['name']
             labels.append(label_info)
-            print [x['name'] for x in labels]
-        print label_info.keys()
+            print 'labels', [x['name'] for x in labels]
+        print 'label_info keys()', label_info.keys()
         print [x['name'] for x in labels]
         #self.write(cr, uid, picking.id, pick2update, context=context)
         #picking = self.browse(cr, uid, picking.id, context=context)
