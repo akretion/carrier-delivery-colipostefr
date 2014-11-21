@@ -41,6 +41,7 @@ class ResCompany(orm.Model):
             'Mot de passe site web',
             help="Le mot de passe doit être identique "
                  "à celui de votre espace client.\n"
+                 "(https://www.coliposte.fr/pro/services/accueil_pro.jsp)"
                  "Uniquement nécessaire pour les envois à l'étranger.\n"
                  "Mettre un mot de passe complexe"),
         'colipostefr_unittest_helper': fields.boolean(
