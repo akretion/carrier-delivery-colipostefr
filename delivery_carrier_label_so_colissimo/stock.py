@@ -120,23 +120,23 @@ class StockPicking(orm.Model):
         return address
 
     def _prepare_address_postefr(self, cr, uid, pick, context=None):
-        # to be sure to override parent method
-        super(StockPicking, self)._prepare_address_postefr(
+        address = super(StockPicking, self)._prepare_address_postefr(
             cr, uid, pick, context=context)
-        address = self._partner_data_postefr(
-            cr, uid, pick.partner_id, 35, context=context)
-        max_street_size = 35
-        if pick.carrier_code in ['6H', '6M', '6J']:
-            max_street_size = 20
-        if pick.has_final_recipient:
-            final_address = self._partner_data_postefr(
-                cr, uid, pick.final_partner_id, max_street_size,
-                context=context)
-            address['final_address'] = final_address
-        else:
-            address['final_address'] = address
-            for field in ['email', 'door_code', 'door_code2', 'intercom']:
-                address[field] = pick.partner_id[field]
+        if pick.type == 'so_colissimo':
+            address = self._partner_data_postefr(
+                cr, uid, pick.partner_id, 35, context=context)
+            max_street_size = 35
+            if pick.carrier_code in ['6H', '6M', '6J']:
+                max_street_size = 20
+            if pick.has_final_recipient:
+                final_address = self._partner_data_postefr(
+                    cr, uid, pick.final_partner_id, max_street_size,
+                    context=context)
+                address['final_address'] = final_address
+            else:
+                address['final_address'] = address
+                for field in ['email', 'door_code', 'door_code2', 'intercom']:
+                    address[field] = pick.partner_id[field]
         return address
 
     def _prepare_sender_postefr(self, cr, uid, pick, context=None):
