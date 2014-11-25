@@ -21,6 +21,7 @@
     <field name="name">9L, Colissimo Access</field>
     <field name="type">colissimo</field>
     <field name="code">9L</field>
+    <field name="use_detailed_pricelist" eval="1"/>
     <field name="deposit_slip" eval="True"/>
     <field name="partner_id" ref="delivery_carrier_colipostefr.partner_la_poste"/>
     <field name="product_id" ref="delivery_carrier_colipostefr.product_product_la_poste"/>
@@ -38,6 +39,7 @@
     <field name="name">9V, Colissimo Expert France</field>
     <field name="type">colissimo</field>
     <field name="code">9V</field>
+    <field name="use_detailed_pricelist" eval="1"/>
     <field name="deposit_slip" eval="True"/>
     <field name="partner_id" ref="delivery_carrier_colipostefr.partner_la_poste"/>
     <field name="product_id" ref="delivery_carrier_colipostefr.product_product_la_poste"/>
@@ -55,6 +57,7 @@
     <field name="name">8Q, Colissimo Access OM</field>
     <field name="type">colissimo</field>
     <field name="code">8Q</field>
+    <field name="use_detailed_pricelist" eval="1"/>
     <field name="deposit_slip" eval="True"/>
     <field name="partner_id" ref="delivery_carrier_colipostefr.partner_la_poste"/>
     <field name="product_id" ref="delivery_carrier_colipostefr.product_product_la_poste"/>
@@ -72,6 +75,7 @@
     <field name="name">7Q, Colissimo Expert OM</field>
     <field name="type">colissimo</field>
     <field name="code">7Q</field>
+    <field name="use_detailed_pricelist" eval="1"/>
     <field name="deposit_slip" eval="True"/>
     <field name="partner_id" ref="delivery_carrier_colipostefr.partner_la_poste"/>
     <field name="product_id" ref="delivery_carrier_colipostefr.product_product_la_poste"/>
@@ -105,6 +109,7 @@
     <field name="name">EI, Colissimo Expert Internat.</field>
     <field name="type">colissimo</field>
     <field name="code">EI</field>
+    <field name="use_detailed_pricelist" eval="1"/>
     <field name="partner_id" ref="delivery_carrier_colipostefr.partner_la_poste"/>
     <field name="product_id" ref="delivery_carrier_colipostefr.product_product_la_poste"/>
 </record>

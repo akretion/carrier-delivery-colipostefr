@@ -209,10 +209,9 @@ class StockPicking(orm.Model):
             we want a label for the picking
         """
         move_ids = [move.id for move in picking.move_lines]
-        moves = [move for move in picking.move_lines]
+        #moves = [move for move in picking.move_lines]
         packages = []
-        moves_with_no_pack = []
-        moves_with_pack = []
+        #moves_with_pack = []
         move_ope_m = self.pool['stock.move.operation.link']
         move_ope_ids = move_ope_m.search(
             cr, uid, [('move_id', 'in', move_ids)], context=context)
@@ -220,11 +219,7 @@ class StockPicking(orm.Model):
                 cr, uid, move_ope_ids, context=context):
             if move_ope.operation_id.result_package_id:
                 packages.append(move_ope.operation_id.result_package_id)
-                moves_with_pack.append(move_ope.move_id)
-        moves_with_no_pack = set(moves) - set(moves_with_pack)
-        if not packages:
-            packages.append(False)
-        return (packages, list(moves_with_no_pack))
+        return list(set(packages))
 
     def _prepare_delivery_postefr(self, cr, uid, pick, number_of_packages,
                                   context=None):
@@ -288,20 +283,9 @@ class StockPicking(orm.Model):
         PACK_NUMBER = 0
         carrier = {}
         deliv = {}
-        label_info = {
-             #'tracking_id': packing.id if packing else False,
-             #'file': label['content'],
-             'file_type': LABEL_TYPE,
-        }
-        pick2update = {}
         if package_ids is None:
-            packages, moves_with_no_pack = self._get_packages_from_moves(
+            packages = self._get_packages_from_moves(
                 cr, uid, picking, context=context)
-            #if moves_with_no_pack:
-            #    raise orm.except_orm(
-            #        "Exception: ",
-            #        "Pour ce transporteur tous les produits à livrer "
-            #        "doivent être dans des packages")
         else:
             # restrict on the provided packages
             packages = self.pool['stock.quant.package'].browse(
@@ -311,9 +295,8 @@ class StockPicking(orm.Model):
         for pack in packages:
             if not pack:
                 without_pack += 1
-        pick2update['number_of_packages'] = len(packages) - without_pack + 1
         delivery = self._prepare_delivery_postefr(
-            cr, uid, picking, pick2update['number_of_packages'],
+            cr, uid, picking, len(packages),
             context=context)
         # Write packing_number on serial field
         # for move lines with package
@@ -322,51 +305,31 @@ class StockPicking(orm.Model):
             addr = address.copy()
             deliv.clear()
             deliv = delivery.copy()
-            #import pdb;pdb.set_trace()
-            if not packing:
-                without_pack -= 1
-                if without_pack > 0:
-                    continue
-                # only executed for the last move line with no package
-                weight = sum([move.weight for move in moves_with_no_pack])
-                #import pdb;pdb.set_trace()
-                pack = self._prepare_pack_postefr(
-                    cr, uid, packing, picking, option, service, france,
-                    weight=weight, context=context)
-                print '\n   pack from not packing', pack
-                deliv.update(pack)
-                ref_client = deliv['ref_client']
-                deliv['ref_client'] = ref_client.replace(
-                    'pack_number', str(pack['pack_number']))
-                label = self.get_zpl(service, sender, deliv, addr, option)
-                #pick2update['carrier_tracking_ref'] = label['tracking_number']
-            else:
-                pack = self._prepare_pack_postefr(
-                    cr, uid, packing, picking, option, service, france,
-                    context=context)
-                pack['name'] = packing.name
-                #pack['name'] = packing.get('nam
-                print '       pack from REAL packing', pack
-                deliv.update(pack)
-                ref_client = deliv['ref_client']
-                deliv['ref_client'] = ref_client.replace(
-                    'pack_number', str(pack['pack_number']))
-                label = self.get_zpl(service, sender, deliv, addr, option)
-                #packing.write({'serial': label['tracking_number']})
+            label_info = {
+                'file_type': LABEL_TYPE,
+            }
+            pack = self._prepare_pack_postefr(
+                cr, uid, packing, picking, option, service, france,
+                context=context)
+            pack['name'] = packing.name
+            deliv.update(pack)
+            ref_client = deliv['ref_client']
+            deliv['ref_client'] = ref_client.replace(
+                'pack_number', str(pack['pack_number']))
+            label = self.get_zpl(service, sender, deliv, addr, option)
             filename = deliv.get('ref_client', deliv['cab_suivi'].replace(' ', ''))
-            print '    file', filename
             label_info.update({
                 #'tracking_id': packing.id if packing else False,
                 #'file': label['content'],
                 'name': '%s.zpl' % filename.replace('/', '_'),
             })
-                ## uncomment the line below to record a new test unit
-                ## based on picking datas
-                #if pick.company_id.colipostefr_unittest_helper and france:
-                #    test_id = self._get_xmlid(cr, uid, pick.id) or 'tmp'
-                #    service._set_unit_test_file_name(
-                #        test_id, sequence, carrier['carrier_tracking_ref'],
-                #        carrier['colipostefr_prise_en_charge'])
+            # uncomment the line below to record a new test unit
+            # based on picking datas
+            #if pick.company_id.colipostefr_unittest_helper and france:
+            #    test_id = self._get_xmlid(cr, uid, pick.id) or 'tmp'
+            #    service._set_unit_test_file_name(
+            #        test_id, sequence, carrier['carrier_tracking_ref'],
+            #        carrier['colipostefr_prise_en_charge'])
 
                 #if label['tracking_number']:
                 #    label_info['name'] = '%s%s.zpl' % (label['tracking_number'],
@@ -382,18 +345,10 @@ class StockPicking(orm.Model):
                                          context=None)
             else:
                 label_info['file'] = label
-                #if config.options.get('debug_mode', True):
-                     ##get file datas in clipboard for paste in zebra viewer
-                    #service._copy2clipboard(label['file'])
-            print 'namef', label_info['name']
             labels.append(label_info)
-            print 'labels', [x['name'] for x in labels]
-        print 'label_info keys()', label_info.keys()
-        print [x['name'] for x in labels]
-        #self.write(cr, uid, picking.id, pick2update, context=context)
-        #picking = self.browse(cr, uid, picking.id, context=context)
+        self.write(cr, uid, picking.id, {'number_of_packages': len(packages)}, context=context)
+        picking = self.browse(cr, uid, picking.id, context=context)
         self._customize_postefr_picking(cr, uid, picking, context=context)
-        #import pdb;pdb.set_trace()
         return labels
 
     def get_zpl(self, service, sender, delivery, address, option):
@@ -401,8 +356,6 @@ class StockPicking(orm.Model):
             result = service.get_label(sender, delivery, address, option)
         except (InvalidMissingField,
                 InvalidDataForMako,
-                #InvalidValueNotInList,
-                #InvalidAccountNumber,
                 InvalidKeyInTemplate,
                 InvalidWebServiceRequest,
                 InvalidKeyInTemplate,

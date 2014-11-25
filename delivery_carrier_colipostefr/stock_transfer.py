@@ -17,14 +17,13 @@ class StockTransferDetails(models.TransientModel):
 
     @api.one
     def do_detailed_transfer(self):
-        print self
+        #TODO forbid from js interface
         for item in self.item_ids:
-            if not item.result_package_id:
-                raise Warning(
-                    u"Exception: ",
-                    u"Pour le transporteur '%s' \ntous les produits "
-                    u"à livrer \ndoivent être "
-                    "mis dans un colis."
-                    % self.picking_id.carrier_id.name)
+            if self.picking_id.carrier_type in ('colissimo', 'so_colissimo'):
+                if not item.result_package_id:
+                    raise Warning(
+                        u"Pour le transporteur '%s' \ntous les produits "
+                        u"à livrer \ndoivent être "
+                        "mis dans un colis."
+                        % self.picking_id.carrier_id.name)
         return super(StockTransferDetails, self).do_detailed_transfer()
-

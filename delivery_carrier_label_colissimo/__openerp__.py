@@ -29,7 +29,7 @@
     'depends': [
         'delivery_carrier_colipostefr',
         'delivery_carrier_deposit',
-        'intrastat_base',
+        'l10n_fr_intrastat_product',
     ],
     'description': """
 Delivery Carrier Label Colissimo
@@ -56,7 +56,7 @@ Some informations have to be filled on two locations :
 * company form (Settings > Companies > Companies):
 complete address of the company, included phone
 
-* configuration form (Settings > Configuration > Carriers > ColiPoste) :
+* config<uration form (Settings > Configuration > Carriers > ColiPoste) :
 the default test account number is 964744
 
 
@@ -86,6 +86,8 @@ Contributors
         'report/report.xml',
         'report/cn23.xml',
         #'stock_view.xml',
+        #'demo/stock.picking.csv',
+        #'demo/stock.move.csv',
     ],
     'external_dependencies': {
         'python': [
