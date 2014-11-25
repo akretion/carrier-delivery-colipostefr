@@ -244,35 +244,35 @@ class StockPicking(orm.Model):
             self, cr, uid, packing, picking, option, service, france,
             weight=None, context=None):
         global PACK_NUMBER
-        pack = {}
+        move_ope_lk_ids_m = self.pool['stock.move.operation.link']
+        # compute weight
+        weight = 0
+        pack_ope_ids = self.pool['stock.pack.operation'].search(cr, uid, [
+            ('result_package_id', '=', packing.id),
+            ('picking_id', '=', picking.id)
+        ], context=context)
+        move_ope_lk_ids = move_ope_lk_ids_m.search(
+            cr, uid, [
+            ('operation_id', 'in', pack_ope_ids)
+        ], context=context)
+        for move in move_ope_lk_ids_m.browse(cr, uid, move_ope_lk_ids, context=context).move_id:
+            weight += move.weight
         PACK_NUMBER += 1
+        pack = {
+            'pack_number': PACK_NUMBER,
+            'weight': weight,
+        }
         if france:
+            # we do not call webservice to get these infos
             sequence = self._get_sequence(
                 cr, uid, picking.carrier_code, context=context)
-            #pack['carrier_tracking_ref'] = service.get_cab_suivi(
             pack['cab_suivi'] = service.get_cab_suivi(
                 sequence)
-            #pack['colipostefr_prise_en_charge'] = \
             pack['cab_prise_en_charge'] = \
                 self._barcode_prise_en_charge_generate(
                     cr, uid, service, picking,
-                    pack['cab_suivi'],
+                    pack['cab_suivi'], weight,
                     option, context=context)
-        pack.update({
-            'pack_number': PACK_NUMBER,
-            'weight': 1,
-            })
-        if weight:
-            pack.update({
-                'weight': weight,
-            })
-        #else:
-        #    if tracking.move_ids:
-        #        tracking_weight = [move.weight
-        #                           for move in tracking.move_ids][0]
-        #        pack.update({
-        #            'weight': tracking_weight,
-        #            })
         return pack
 
     def _generate_coliposte_label(
@@ -291,16 +291,17 @@ class StockPicking(orm.Model):
             packages = self.pool['stock.quant.package'].browse(
                 cr, uid, package_ids, context=context)
         labels = []
-        without_pack = 0
-        for pack in packages:
-            if not pack:
-                without_pack += 1
+        #without_pack = 0
+        #for pack in packages:
+        #    if not pack:
+        #        without_pack += 1
         delivery = self._prepare_delivery_postefr(
             cr, uid, picking, len(packages),
             context=context)
         # Write packing_number on serial field
         # for move lines with package
         # and on picking for other moves
+        print packages
         for packing in packages:
             addr = address.copy()
             deliv.clear()
@@ -472,7 +473,7 @@ class StockPicking(orm.Model):
         return sequence
 
     def _barcode_prise_en_charge_generate(
-            self, cr, uid, service, picking, carrier_track, option,
+            self, cr, uid, service, picking, carrier_track, weight, option,
             context=None):
         """
         :return: the second barcode
@@ -483,7 +484,7 @@ class StockPicking(orm.Model):
                 'countryCode': picking.partner_id
                 and picking.partner_id.country_id
                 and picking.partner_id.country_id.code or '',
-                'weight': picking.weight,
+                'weight': weight,
                 'carrier_track': carrier_track,
             }
             infos.update(option)
