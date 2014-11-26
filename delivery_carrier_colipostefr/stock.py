@@ -243,7 +243,6 @@ class StockPicking(orm.Model):
     def _prepare_pack_postefr(
             self, cr, uid, packing, picking, option, service, france,
             weight=None, context=None):
-        global PACK_NUMBER
         move_ope_lk_ids_m = self.pool['stock.move.operation.link']
         # compute weight
         weight = 0
@@ -251,38 +250,36 @@ class StockPicking(orm.Model):
             ('result_package_id', '=', packing.id),
             ('picking_id', '=', picking.id)
         ], context=context)
-        move_ope_lk_ids = move_ope_lk_ids_m.search(
-            cr, uid, [
+        move_ope_lk_ids = move_ope_lk_ids_m.search(cr, uid, [
             ('operation_id', 'in', pack_ope_ids)
         ], context=context)
         for move in move_ope_lk_ids_m.browse(cr, uid, move_ope_lk_ids, context=context).move_id:
             weight += move.weight
-        PACK_NUMBER += 1
         pack = {
-            'pack_number': PACK_NUMBER,
             'weight': weight,
         }
         if france:
             # we do not call webservice to get these infos
-            sequence = self._get_sequence(
+            pack['sequence'] = self._get_sequence(
                 cr, uid, picking.carrier_code, context=context)
-            pack['cab_suivi'] = service.get_cab_suivi(
-                sequence)
+            cab_suivi = service.get_cab_suivi(
+                pack['sequence'])
             pack['cab_prise_en_charge'] = \
                 self._barcode_prise_en_charge_generate(
-                    cr, uid, service, picking,
-                    pack['cab_suivi'], weight,
+                    cr, uid, service, picking, cab_suivi, weight,
                     option, context=context)
+            pack['cab_suivi'] = cab_suivi.replace(' ', '')
         return pack
 
     def _generate_coliposte_label(
             self, cr, uid, picking, service, sender, address, france, option,
             package_ids=None, context=None):
         """ Generate labels and write package numbers received """
-        global PACK_NUMBER
-        PACK_NUMBER = 0
+        pack_number = 0
         carrier = {}
         deliv = {}
+        labels = []
+        tracking_refs = []
         if package_ids is None:
             packages = self._get_packages_from_moves(
                 cr, uid, picking, context=context)
@@ -290,19 +287,10 @@ class StockPicking(orm.Model):
             # restrict on the provided packages
             packages = self.pool['stock.quant.package'].browse(
                 cr, uid, package_ids, context=context)
-        labels = []
-        #without_pack = 0
-        #for pack in packages:
-        #    if not pack:
-        #        without_pack += 1
         delivery = self._prepare_delivery_postefr(
-            cr, uid, picking, len(packages),
-            context=context)
-        # Write packing_number on serial field
-        # for move lines with package
-        # and on picking for other moves
-        print packages
+            cr, uid, picking, len(packages), context=context)
         for packing in packages:
+            pack_number += 1
             addr = address.copy()
             deliv.clear()
             deliv = delivery.copy()
@@ -314,31 +302,29 @@ class StockPicking(orm.Model):
                 context=context)
             pack['name'] = packing.name
             deliv.update(pack)
-            ref_client = deliv['ref_client']
-            deliv['ref_client'] = ref_client.replace(
-                'pack_number', str(pack['pack_number']))
+            deliv['ref_client'] = deliv['ref_client'].replace(
+                'pack_number', str(pack_number))
             label = self.get_zpl(service, sender, deliv, addr, option)
-            filename = deliv.get('ref_client', deliv['cab_suivi'].replace(' ', ''))
+            filename = deliv['ref_client'].replace('/', '_')
             label_info.update({
                 #'tracking_id': packing.id if packing else False,
                 #'file': label['content'],
-                'name': '%s.zpl' % filename.replace('/', '_'),
+                'name': '%s.zpl' % filename,
             })
             # uncomment the line below to record a new test unit
             # based on picking datas
-            #if pick.company_id.colipostefr_unittest_helper and france:
-            #    test_id = self._get_xmlid(cr, uid, pick.id) or 'tmp'
-            #    service._set_unit_test_file_name(
-            #        test_id, sequence, carrier['carrier_tracking_ref'],
-            #        carrier['colipostefr_prise_en_charge'])
-
-                #if label['tracking_number']:
-                #    label_info['name'] = '%s%s.zpl' % (label['tracking_number'],
-                #                                       label['filename'])
+            if picking.company_id.colipostefr_unittest_helper and france:
+                test_id = self._get_xmlid(cr, uid, picking.id) or 'no_value'
+                service._set_unit_test_file_name(
+                    test_id, pack['sequence'], pack['cab_suivi'],
+                    pack['cab_prise_en_charge'])
+                if label['tracking_number']:
+                    label_info['name'] = '%s%s.zpl' % (
+                        label['tracking_number'], label['filename'])
             if picking.carrier_code in ['EI', 'AI', 'SO']:
                 label_info['file'] = modify_label_content(label[0])
-                carrier['carrier_tracking_ref'] = label[2]
-                carrier['colipostefr_prise_en_charge'] = label[3]
+                pack['cab_suivi'] = label[2]
+                pack['cab_prise_en_charge'] = label[3]
                 self.write(cr, uid, [picking.id], carrier)
                 picking = self.browse(cr, uid, picking.id, context=context)
                 if label[1]:
@@ -347,7 +333,18 @@ class StockPicking(orm.Model):
             else:
                 label_info['file'] = label
             labels.append(label_info)
-        self.write(cr, uid, picking.id, {'number_of_packages': len(packages)}, context=context)
+            pack_vals = {
+                'weight': pack['weight'],
+                'parcel_tracking': pack['cab_suivi'],
+            }
+            self.pool['stock.quant.package'].write(
+                cr, uid, packing.id, pack_vals, context=context)
+            tracking_refs.append(pack['cab_suivi'])
+        pick_vals = {
+            'number_of_packages': len(packages),
+            'carrier_tracking_ref': ' '.join(tracking_refs),
+        }
+        self.write(cr, uid, picking.id, pick_vals, context=context)
         picking = self.browse(cr, uid, picking.id, context=context)
         self._customize_postefr_picking(cr, uid, picking, context=context)
         return labels
