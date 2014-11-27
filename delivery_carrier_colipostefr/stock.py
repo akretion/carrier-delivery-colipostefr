@@ -32,7 +32,6 @@ from datetime import datetime
 
 EXCEPT_TITLE = "'Colissimo and So' library Exception"
 LABEL_TYPE = 'zpl2'
-PACK_NUMBER = 0
 
 
 def raise_exception(orm, message):
@@ -203,22 +202,19 @@ class StockPicking(orm.Model):
             sender['chargeur'] = pick.company_id.colipostefr_account_chargeur
         return sender
 
-    def _get_packages_from_moves(self, cr, uid, picking, context=None):
-        """ get all the packages of the picking
-            no tracking_id will return a False (Browse Null), meaning that
-            we want a label for the picking
+    def _get_packages_from_picking(self, cr, uid, picking, context=None):
+        """ get all the packages from the picking
         """
-        move_ids = [move.id for move in picking.move_lines]
-        #moves = [move for move in picking.move_lines]
+        stk_pack_ope_m = self.pool['stock.pack.operation']
         packages = []
-        #moves_with_pack = []
-        move_ope_m = self.pool['stock.move.operation.link']
-        move_ope_ids = move_ope_m.search(
-            cr, uid, [('move_id', 'in', move_ids)], context=context)
-        for move_ope in move_ope_m.browse(
-                cr, uid, move_ope_ids, context=context):
-            if move_ope.operation_id.result_package_id:
-                packages.append(move_ope.operation_id.result_package_id)
+        pack_ope_ids = stk_pack_ope_m.search(cr, uid, [
+            ('result_package_id', '!=', False),
+            ('picking_id', '=', picking.id)
+        ], context=context)
+        for pack_ope in stk_pack_ope_m.browse(
+                cr, uid, pack_ope_ids, context=context):
+            if pack_ope.result_package_id:
+                packages.append(pack_ope.result_package_id)
         return list(set(packages))
 
     def _prepare_delivery_postefr(self, cr, uid, pick, number_of_packages,
@@ -253,8 +249,9 @@ class StockPicking(orm.Model):
         move_ope_lk_ids = move_ope_lk_ids_m.search(cr, uid, [
             ('operation_id', 'in', pack_ope_ids)
         ], context=context)
-        for move in move_ope_lk_ids_m.browse(cr, uid, move_ope_lk_ids, context=context).move_id:
-            weight += move.weight
+        for move_ope_link in move_ope_lk_ids_m.browse(
+                cr, uid, move_ope_lk_ids, context=context):
+            weight += move_ope_link.move_id.weight
         pack = {
             'weight': weight,
         }
@@ -450,6 +447,20 @@ class StockPicking(orm.Model):
                 self.pool['mail.message'].create(cr, uid, vals,
                                                  context=context)
         return True
+
+    def _get_packages_from_moves(self, cr, uid, picking, context=None):
+        """ get all the packages from the move of the picking
+        """
+        move_ids = [move.id for move in picking.move_lines]
+        packages = []
+        move_ope_m = self.pool['stock.move.operation.link']
+        move_ope_ids = move_ope_m.search(
+            cr, uid, [('move_id', 'in', move_ids)], context=context)
+        for move_ope in move_ope_m.browse(
+                cr, uid, move_ope_ids, context=context):
+            if move_ope.operation_id.result_package_id:
+                packages.append(move_ope.operation_id.result_package_id)
+        return list(set(packages))
 
     def _get_xmlid(self, cr, uid, id):
         "only used in development"
