@@ -182,6 +182,7 @@ class DepositSlip(orm.Model):
         return lines
 
     def create_csv(self, cr, uid, header, lines, context=None):
+        ENCODING='ISO-8859-1'
         f = StringIO()
         b = unicodecsv.DictWriter(f, [
             "Type d'enregistrement", "Identifiant du bordereau",
@@ -207,9 +208,36 @@ class DepositSlip(orm.Model):
             "Identifiant Colissimo du destinataire", "Téléphone", "Courriel",
             "Téléphone portable", "Identifiant du point de retrait",
             "Code avoir/promotion", "Type Alerte Destinataire"],
-            dialect=LaposteDialect, encoding='ISO-8859-1')
+            dialect=LaposteDialect, encoding=ENCODING)
         for line in lines:
-            w.writerow(line)
+            try:
+                w.writerow(line)
+            except UnicodeEncodeError as e:
+                dct = line.copy()
+                columns2hide = [
+                    'Contre-remboursement',
+                    'Assurance Ad Valorem',
+                    'Code Pays Destinataire',
+                    'Poids du colis',
+                    'Type de TRI Colis',
+                    'Code avoir/promotion',
+                    'Information de routage',
+                    'Devise Contre remboursement',
+                    'Devise assurance',
+                    'Livraison Samedi',
+                    'Code produit',
+                    ]
+                for elm in columns2hide:
+                    del dct[elm]
+                dct2string = unicode(dct).replace("', '", "'\n'")
+                raise orm.except_orm(
+                    "Encoding Error",
+                    u"Problème lors de l'encodage en '%s'\n"
+                    u"%s\n\n1/ Recherchez cette donnée dans les infos ci-dessous "
+                    u"qui proviennent de vos bons de livraisons "
+                    u"ou données clients"
+                    u"\n%s\n\n2/ Corriger la dans l'ERP"
+                    % (ENCODING, e.args, dct2string))
         f.seek(0)
         datas = f.read()
         return datas
