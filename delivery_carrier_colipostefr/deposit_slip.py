@@ -98,7 +98,7 @@ class DepositSlip(orm.Model):
                 weight = int(picking.weight*1000)
                 name = address.name.replace(' ', '`')
                 if address.title:
-                    name = address.title.shorcut.replace('.', '') + "`" + name
+                    name = address.title.shortcut.replace('.', '') + "`" + name
                 else:
                     name = "M`" + name
                 phone = self.phone_number_formating(
