@@ -69,12 +69,8 @@ Contributors
         'data/delivery.xml',
         'data/file_repository.xml',
         'config_view.xml',
-        #'stock_view.xml',
+        'stock_view.xml',
         #'deposit_view.xml'
-
-        #'demo/res.partner.csv',
-        #'demo/company.xml',
-        #'demo/product.xml',
     ],
     'demo': [
         'demo/res.partner.csv',

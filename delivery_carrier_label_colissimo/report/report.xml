@@ -13,7 +13,7 @@
     model="stock.picking"
     string="CN23 pdf"
     report_type="qweb-pdf"
-    name="delivery_carrier_label_colissimo.report_coliposte_cn23"
+    name="delivery_carrier_label_colissimo.report_tpl_coliposte_cn23"
     file="delivery_carrier_deposit.report.cn23"
     />
 

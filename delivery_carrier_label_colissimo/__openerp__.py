@@ -85,7 +85,7 @@ Contributors
         'data/sequence.xml',
         'report/report.xml',
         'report/cn23.xml',
-        #'stock_view.xml',
+        'stock_view.xml',
     ],
     'external_dependencies': {
         'python': [
