@@ -26,28 +26,37 @@ class ColiposteFrConfigSettings(orm.TransientModel):
     _columns = {
         'company_id': fields.many2one('res.company', 'Company', required=True),
         'account': fields.related(
-            'company_id.colipostefr_account',
-            string='Compte',
+            'company_id', 'colipostefr_account',
+            string='Compte Principal',
             relation='res.company',
             type='char',
             help="Nombre à 6 caractères.\n"
                  "La valeur par défaut est 964744"),
+        'world_account': fields.related(
+            'company_id', 'colipostefr_world_account',
+            string='Compte International',
+            relation='res.company',
+            type='char',
+            help="Nombre à 6 caractères.\n"
+                 "La valeur par défaut est 964744\n"
+                 "Potentiellement c'est le même N° que le compte principal."
+                 "Dans ce cas, vous pouvez laisser ce champ vide."),
         'support_city': fields.related(
-            'company_id.colipostefr_support_city',
+            'company_id', 'colipostefr_support_city',
             string='Site de Prise en Charge',
             relation='res.company',
             type='char',
             help="Site de prise en charge de la poste pour son client.\n"
                  "Indiquer votre propre centre de rattachement"),
         'support_city_code': fields.related(
-            'company_id.colipostefr_support_city_code',
+            'company_id', 'colipostefr_support_city_code',
             string='Code Site de Prise en Charge',
             relation='res.company',
             type='char',
             help="Utile uniquement pour le module colissimo EDI "
                  "(facultatif cependant)"),
         'password': fields.related(
-            'company_id.colipostefr_password',
+            'company_id', 'colipostefr_password',
             string='Mot de passe site web',
             relation='res.company',
             type='char',
@@ -56,7 +65,7 @@ class ColiposteFrConfigSettings(orm.TransientModel):
                  "Uniquement nécessaire pour les envois à l'étranger.\n"
                  "Mettre un mot de passe complexe"),
         'unittest_helper': fields.related(
-            'company_id.colipostefr_unittest_helper',
+            'company_id', 'colipostefr_unittest_helper',
             string='Unit Test Helper',
             relation='res.company',
             type='boolean',
@@ -66,7 +75,7 @@ class ColiposteFrConfigSettings(orm.TransientModel):
                  "Ce fichier peut être utilisé pour créer "
                  "de nouveaux tests unitaires python"),
         'webservice_message': fields.related(
-            'company_id.colipostefr_webservice_message',
+            'company_id', 'colipostefr_webservice_message',
             string='Enregistre les Messages du Webservice',
             relation='res.company',
             type='boolean',
@@ -74,9 +83,9 @@ class ColiposteFrConfigSettings(orm.TransientModel):
                  "sera créé dans le bon de livraison\nsi la réponse du "
                  "web service contient un message additionnel."),
         'repo_task_id': fields.related(
-            'company_id.colipostefr_repo_task_id',
+            'company_id', 'colipostefr_repo_task_id',
             string='Tâche Edi',
-            relation='res.company',
+            relation='repository.task',
             type='many2one',
             help="Liaison à la tâche qui exporte le fichier edi.\n"
                  "Ne pas créer de tâche spécifique ici.\n"
@@ -103,8 +112,9 @@ class ColiposteFrConfigSettings(orm.TransientModel):
             return {'value': values}
         company = self.pool.get('res.company').browse(
             cr, uid, company_id, context=context)
-        fields = ['account', 'support_city', 'support_city_code',
-                  'password', 'webservice_message', 'repo_task_id']
+        fields = ['account', 'world_account', 'support_city',
+                  'support_city_code', 'password', 'webservice_message',
+                  'unittest_helper', 'repo_task_id']
         for field in fields:
             cpny_field = 'colipostefr_%s' % field
             values[field] = company[cpny_field]
