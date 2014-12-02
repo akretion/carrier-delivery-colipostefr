@@ -202,6 +202,12 @@ class StockPicking(orm.Model):
             sender['chargeur'] = pick.company_id.colipostefr_account_chargeur
         return sender
 
+    def _get_account(self, cr, uid, pick, france, context=None):
+        account = pick.company_id.colipostefr_account
+        if not france:
+            return pick.company_id.colipostefr_world_account or account
+        return account
+
     def _get_packages_from_picking(self, cr, uid, picking, context=None):
         """ get all the packages from the picking
         """
@@ -383,8 +389,12 @@ class StockPicking(orm.Model):
                     _("Carrier code missing"),
                     _("'Carrier code' is missing in '%s' delivery method"
                       % pick.carrier_type))
+            france = True
+            if pick.carrier_code in ['EI', 'AI', 'SO']:
+                france = False
             try:
-                account = pick.company_id.colipostefr_account
+                account = self._get_account(
+                    cr, uid, pick, france, context=context)
                 service = ColiPoste(account).get_service(
                     pick.carrier_type, pick.carrier_code)
             except (InvalidSize, InvalidCode, InvalidType) as e:
@@ -393,9 +403,6 @@ class StockPicking(orm.Model):
                 raise orm.except_orm(
                     "'Colissimo and So' Library Error",
                     map_except_message(e.message))
-            france = True
-            if pick.carrier_code in ['EI', 'AI', 'SO']:
-                france = False
             option = self._prepare_option_postefr(
                 cr, uid, pick, context=context)
             sender = self._prepare_sender_postefr(cr, uid, pick,
