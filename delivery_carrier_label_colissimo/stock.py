@@ -35,9 +35,14 @@ class StockPicking(orm.Model):
         return super(StockPicking, self).action_done(
             cr, uid, ids, context=context)
 
-    def get_128_barcode(self, cr, uid, ids, context=None):
+
+class StockQuantPackage(orm.Model):
+    _inherit = 'stock.quant.package'
+
+    def get_128_barcode(
+            self, cr, uid, ids, height=100, thickness=2, context=None):
         assert len(ids) == 1, \
             _('This option should only be used for a single id at a time')
-        picking = self.browse(cr, uid, ids[0], context=context)
-        tracking = picking.carrier_tracking_ref.replace(' ', '')
-        return code128_image(tracking, height=100, thickness=2)
+        package = self.browse(cr, uid, ids[0], context=context)
+        tracking = package.parcel_tracking.replace(' ', '')
+        return code128_image(tracking, height=height, thickness=thickness)
