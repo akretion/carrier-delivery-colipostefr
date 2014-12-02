@@ -44,5 +44,8 @@ class StockQuantPackage(orm.Model):
         assert len(ids) == 1, \
             _('This option should only be used for a single id at a time')
         package = self.browse(cr, uid, ids[0], context=context)
-        tracking = package.parcel_tracking.replace(' ', '')
-        return code128_image(tracking, height=height, thickness=thickness)
+        if package.parcel_tracking:
+            tracking = package.parcel_tracking.replace(' ', '')
+            return code128_image(tracking, height=height, thickness=thickness)
+        else:
+            return False
