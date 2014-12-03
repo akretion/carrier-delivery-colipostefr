@@ -326,12 +326,20 @@ class StockPicking(orm.Model):
             tracking_refs.append(pack['cab_suivi'])
         pick_vals = {
             'number_of_packages': len(packages),
-            'carrier_tracking_ref': ' '.join(tracking_refs),
+            'carrier_tracking_ref': 'see in packages',
         }
         self.write(cr, uid, picking.id, pick_vals, context=context)
         picking = self.browse(cr, uid, picking.id, context=context)
         self._customize_postefr_picking(cr, uid, picking, context=context)
         return labels
+
+    def _get_tracking_refs(self, cr, uid, picking, context=None):
+        tracking_refs = []
+        for pack in self._get_packages_from_picking(
+                self, cr, uid, picking, context=context):
+            if pack.parcel_tracking:
+                tracking_refs.append(pack.parcel_tracking)
+        return tracking_refs
 
     def get_zpl(self, service, sender, delivery, address, option):
         try:
