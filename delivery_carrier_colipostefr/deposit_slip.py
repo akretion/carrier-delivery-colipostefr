@@ -95,7 +95,6 @@ class DepositSlip(orm.Model):
                 AR = "N"
                 if picking.carrier_code == "6C":
                     AR = "O"
-                weight = int(picking.weight*1000)
                 name = address.name.replace(' ', '`')
                 if address.title:
                     name = address.title.shortcut.replace('.', '') + "`" + name
@@ -107,71 +106,71 @@ class DepositSlip(orm.Model):
                     cr, uid, address.mobile, context=context)
                 phone, mobile = self._coliposte_default_phone(
                     cr, uid, phone, mobile, context=context)
-                barcode_routage = ""
-                sequence = picking.carrier_tracking_ref[2:-1].replace(' ', '')
-                # TODO So Colissimo
-                # if picking.coliss_barcode_routage:
-                #     cab_label = pick.c_barcode_routage.replace(' ', '')[1:]
-                #     cab_content = pick.c_barcode_routage.replace(' ','')[:-1]
-                #     barcode_routage = "%s`%s`%s`%s`%s" % (
-                #         dropoff_site.lot_routing,
-                #         dropoff_site.distri_sort,
-                #         dropoff_site.version_plan,
-                #         cab_label,
-                #         cab_content
-                #     )
-                country_code = ''
-                if address.country_id:
-                    country_code = address.country_id.code
-
-                vals = {
-                    "Type d'enregistrement": "DDD001",
-                    "Code produit": picking.carrier_code,
-                    "Numéro du colis": sequence,
-                    "Poids du colis": weight,
-                    "Code postal de livraison": address.zip,
-                    "Contre-remboursement": 0,
-                    "Devise Contre remboursement": "EUR",
-                    "Assurance Ad Valorem": 0,
-                    "Devise assurance": "EUR",
-                    "Livraison Samedi": "O",
-                    "Non Mécanisable": non_machi,
-                    "Nom du destinataire": name,
-                    "Raison sociale": "",
-                    "Première ligne d’adresse": "",
-                    "Seconde ligne d'adresse": "",
-                    "Troisième ligne d'adresse": address.street,
-                    "Quatrième ligne d’adresse": "",
-                    "Code postal du destinataire": address.zip,
-                    "Commune du destinataire": address.city,
-                    "Commentaire 1": "",
-                    "Information de routage": barcode_routage,
-                    "Code Pays Destinataire": country_code,
-                    "Niveau de recommandation": "",
-                    "Accusé réception": AR,
-                    "Type de TRI Colis": "NON",
-                    "Franc de taxe et de droit": "N",
-                    # TODO
-                    "Identifiant Colissimo du destinataire": "",
-                    "Téléphone": phone,
-                    "Courriel": self._coliposte_default_mail(
-                        cr, uid, address.email, context=context),
-                    "Téléphone portable": mobile,
-                    "Code avoir/promotion": "",
-                    "Type Alerte Destinataire": "",
-                }
                 if not phone and not mobile and not address.email:
                     raise orm.except_orm(
                         'Information manquante',
                         "L'un des champs suivant ne doit pas être vide:\n"
                         "mobile, phone, email\n"
                         "(sous peine de surtaxation de La Poste)")
-                vals.update(
-                    self._complete_edi_lines(
-                        cr, uid, picking, deposit, address, dropoff_code,
-                        context=context)
-                )
-                lines.append(vals)
+                country_code = ''
+                if address.country_id:
+                    country_code = address.country_id.code
+                for pack in picking._get_packages_from_picking(picking):
+                    sequence = pack.parcel_tracking
+                    weight = int(pack.weight*1000)
+                    # TODO So Colissimo
+                    barcode_routage = ''
+                    # if picking.coliss_barcode_routage:
+                    #     cab_label = pick.c_barcode_routage.replace(' ', '')[1:]
+                    #     cab_content = pick.c_barcode_routage.replace(' ','')[:-1]
+                    #     barcode_routage = "%s`%s`%s`%s`%s" % (
+                    #         dropoff_site.lot_routing,
+                    #         dropoff_site.distri_sort,
+                    #         dropoff_site.version_plan,
+                    #         cab_label,
+                    #         cab_content
+                    #     )
+                    vals = {
+                        "Type d'enregistrement": "DDD001",
+                        "Code produit": picking.carrier_code,
+                        "Numéro du colis": sequence,
+                        "Poids du colis": weight,
+                        "Code postal de livraison": address.zip,
+                        "Contre-remboursement": 0,
+                        "Devise Contre remboursement": "EUR",
+                        "Assurance Ad Valorem": 0,
+                        "Devise assurance": "EUR",
+                        "Livraison Samedi": "O",
+                        "Non Mécanisable": non_machi,
+                        "Nom du destinataire": name,
+                        "Raison sociale": "",
+                        "Première ligne d’adresse": "",
+                        "Seconde ligne d'adresse": "",
+                        "Troisième ligne d'adresse": address.street,
+                        "Quatrième ligne d’adresse": "",
+                        "Code postal du destinataire": address.zip,
+                        "Commune du destinataire": address.city,
+                        "Commentaire 1": "",
+                        "Information de routage": barcode_routage,
+                        "Code Pays Destinataire": country_code,
+                        "Niveau de recommandation": "",
+                        "Accusé réception": AR,
+                        "Type de TRI Colis": "NON",
+                        "Franc de taxe et de droit": "N",
+                        "Identifiant Colissimo du destinataire": '',
+                        "Téléphone": phone,
+                        "Courriel": self._coliposte_default_mail(
+                            cr, uid, address.email, context=context),
+                        "Téléphone portable": mobile,
+                        "Code avoir/promotion": "",
+                        "Type Alerte Destinataire": "",
+                    }
+                    vals.update(
+                        self._complete_edi_lines(
+                            cr, uid, picking, deposit, address, dropoff_code,
+                            context=context)
+                    )
+                    lines.append(vals)
         return lines
 
     def _complete_edi_lines(self, cr, uid, picking, deposit, address,

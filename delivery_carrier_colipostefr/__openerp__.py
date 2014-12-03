@@ -70,7 +70,7 @@ Contributors
         'data/file_repository.xml',
         'config_view.xml',
         'stock_view.xml',
-        #'deposit_view.xml'
+        'deposit_view.xml'
     ],
     'demo': [
         'demo/res.partner.csv',
