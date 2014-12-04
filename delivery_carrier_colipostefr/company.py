@@ -57,14 +57,14 @@ class ResCompany(orm.Model):
                  "web service contient un message additionnel."),
         'colipostefr_repo_task_id': fields.many2one(
             'repository.task',
-            string="Tâche Edi",
-            help="Liaison à la tâche qui exporte le fichier edi.\n"
+            string="Tâche EDI",
+            help="Liaison à la tâche qui exporte le fichier EDI.\n"
                  "Ne pas créer de tâche spécifique ici.\n"
                  "La valeur par défaut pour la principale société d'Odoo "
                  "ne doit pas changer.\nUtilisez une tâche créée "
-                 "depuis le repository 'La Poste Edi'\n"
+                 "depuis le repository 'La Poste EDI'\n"
                  "(Configuration > File Exchange > File Repositories "
-                 "> La Poste Edi)"),
+                 "> La Poste EDI)"),
     }
 
     _defaults = {
