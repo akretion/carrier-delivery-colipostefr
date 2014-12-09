@@ -189,7 +189,7 @@ class StockPicking(orm.Model):
 
     def _prepare_sender_postefr(self, cr, uid, pick, context=None):
         partner = self.pool['stock.picking']._get_label_sender_address(
-            cr, uid, pick, context=context)
+            cr, uid, pick.id, context=context)
         sender = {'support_city': pick.company_id.colipostefr_support_city,
                   'password': pick.company_id.colipostefr_password}
         if partner.country_id:
