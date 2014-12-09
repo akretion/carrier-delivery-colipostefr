@@ -220,11 +220,6 @@ class StockPicking(orm.Model):
             'date': shipping_date.strftime('%d/%m/%Y'),
             'parcel_total_number': number_of_packages,
         }
-        #if pick.carrier_code not in ['EI', 'AI', 'SO']:
-        #    delivery.update({
-        #        'cab_prise_en_charge': pick.colipostefr_prise_en_charge,
-        #        'cab_suivi': pick.carrier_tracking_ref,
-        #    })
         return delivery
 
     def _prepare_pack_postefr(
@@ -265,15 +260,12 @@ class StockPicking(orm.Model):
         labels = []
         tracking_refs = []
         if package_ids is None:
-            packages = self._get_packages_from_picking(
-                cr, uid, picking, context=context)
-        else:
-            # restrict on the provided packages
-            packages = self.pool['stock.quant.package'].browse(
-                cr, uid, package_ids, context=context)
+            package_ids = self._get_packages_from_picking(
+                cr, uid, picking.id, context=context)
         delivery = self._prepare_delivery_postefr(
-            cr, uid, picking, len(packages), context=context)
-        for packing in packages:
+            cr, uid, picking, len(package_ids), context=context)
+        for packing in self.pool['stock.quant.package'].browse(
+                cr, uid, package_ids, context=context):
             pack_number += 1
             addr = address.copy()
             deliv.clear()
@@ -291,20 +283,14 @@ class StockPicking(orm.Model):
             label = self.get_zpl(service, sender, deliv, addr, option)
             filename = deliv['ref_client'].replace('/', '_')
             label_info.update({
-                #'tracking_id': packing.id if packing else False,
-                #'file': label['content'],
                 'name': '%s.zpl' % filename,
             })
-            # uncomment the line below to record a new test unit
-            # based on picking datas
+            # allow to record a new test unit based on picking datas
             if picking.company_id.colipostefr_unittest_helper and france:
                 test_id = self._get_xmlid(cr, uid, picking.id) or 'no_value'
                 service._set_unit_test_file_name(
                     test_id, pack['sequence'], pack['cab_suivi'],
                     pack['cab_prise_en_charge'])
-                if label['tracking_number']:
-                    label_info['name'] = '%s%s.zpl' % (
-                        label['tracking_number'], label['filename'])
             if picking.carrier_code in ['EI', 'AI', 'SO']:
                 label_info['file'] = modify_label_content(label[0])
                 pack['cab_suivi'] = label[2]
@@ -313,7 +299,7 @@ class StockPicking(orm.Model):
                 picking = self.browse(cr, uid, picking.id, context=context)
                 if label[1]:
                     self._create_comment(cr, uid, picking, label[1],
-                                         context=None)
+                                         context=context)
             else:
                 label_info['file'] = label
             labels.append(label_info)
@@ -325,7 +311,7 @@ class StockPicking(orm.Model):
                 cr, uid, packing.id, pack_vals, context=context)
             tracking_refs.append(pack['cab_suivi'])
         pick_vals = {
-            'number_of_packages': len(packages),
+            'number_of_packages': len(package_ids),
             'carrier_tracking_ref': 'see in packages',
         }
         self.write(cr, uid, picking.id, pick_vals, context=context)
