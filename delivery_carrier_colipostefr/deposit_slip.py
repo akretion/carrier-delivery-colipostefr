@@ -21,6 +21,7 @@ from openerp.tools import misc
 
 # This code is used by Colissimo and So Colissimo
 # TODO this code is not fully updated for So Colissimo
+# coorection will be firstly defined in v7 branch
 
 
 class LaposteDialect(Dialect):
@@ -82,14 +83,14 @@ class DepositSlip(orm.Model):
         for picking in deposit.picking_ids:
             if picking.carrier_code not in ['EI', 'AI']:
                 address = picking.partner_id
-                # TODO So Colissimo
+                # TODO So Colissimo see correction in V7 branch
                 # dropoff_site = picking.dropoff_site_id
                 non_machi = "N"
                 # TODO
                 # if picking.non_machinable:
                 #     non_machi = "O"
                 dropoff_code = None
-                # TODO So Colissimo
+                # TODO So Colissimo see correction in V7 branch
                 # if picking.to_dropoff_site:
                     # dropoff_code = dropoff_site.code
                 AR = "N"
@@ -118,7 +119,7 @@ class DepositSlip(orm.Model):
                 for pack in picking._get_packages_from_picking(picking):
                     sequence = pack.parcel_tracking
                     weight = int(pack.weight*1000)
-                    # TODO So Colissimo
+                    # TODO So Colissimo see correction in V7 branch
                     barcode_routage = ''
                     # if picking.coliss_barcode_routage:
                     #     cab_label = pick.c_barcode_routage.replace(' ', '')[1:]
