@@ -208,21 +208,6 @@ class StockPicking(orm.Model):
             return pick.company_id.colipostefr_world_account or account
         return account
 
-    def _get_packages_from_picking(self, cr, uid, picking, context=None):
-        """ get all the packages from the picking
-        """
-        stk_pack_ope_m = self.pool['stock.pack.operation']
-        packages = []
-        pack_ope_ids = stk_pack_ope_m.search(cr, uid, [
-            ('result_package_id', '!=', False),
-            ('picking_id', '=', picking.id)
-        ], context=context)
-        for pack_ope in stk_pack_ope_m.browse(
-                cr, uid, pack_ope_ids, context=context):
-            if pack_ope.result_package_id:
-                packages.append(pack_ope.result_package_id)
-        return list(set(packages))
-
     def _prepare_delivery_postefr(self, cr, uid, pick, number_of_packages,
                                   context=None):
         shipping_date = pick.min_date
@@ -245,22 +230,18 @@ class StockPicking(orm.Model):
     def _prepare_pack_postefr(
             self, cr, uid, packing, picking, option, service, france,
             weight=None, context=None):
-        move_ope_lk_ids_m = self.pool['stock.move.operation.link']
+        pack_op_obj = self.pool['stock.pack.operation']
         # compute weight
         weight = 0
-        pack_ope_ids = self.pool['stock.pack.operation'].search(cr, uid, [
-            ('result_package_id', '=', packing.id),
-            ('picking_id', '=', picking.id)
-        ], context=context)
-        move_ope_lk_ids = move_ope_lk_ids_m.search(cr, uid, [
-            ('operation_id', 'in', pack_ope_ids)
-        ], context=context)
-        for move_ope_link in move_ope_lk_ids_m.browse(
-                cr, uid, move_ope_lk_ids, context=context):
-            weight += move_ope_link.move_id.weight
-        pack = {
-            'weight': weight,
-        }
+        pack_op_ids = pack_op_obj.search(
+            cr, uid, [('result_package_id', '=', packing.id)],
+            context=context)
+        for pack_op in pack_op_obj.browse(
+                cr, uid, pack_op_ids, context=context):
+            weight += pack_op.product_id.weight * pack_op.product_qty
+        if packing.ul_id:
+            weight += packing.ul_id.weight
+        pack = {'weight': weight}
         if france:
             # we do not call webservice to get these infos
             pack['sequence'] = self._get_sequence(
@@ -284,7 +265,7 @@ class StockPicking(orm.Model):
         labels = []
         tracking_refs = []
         if package_ids is None:
-            packages = self._get_packages_from_moves(
+            packages = self._get_packages_from_picking(
                 cr, uid, picking, context=context)
         else:
             # restrict on the provided packages
@@ -397,6 +378,21 @@ class StockPicking(orm.Model):
                     _("Carrier code missing"),
                     _("'Carrier code' is missing in '%s' delivery method"
                       % pick.carrier_type))
+            # Check that labels don't already exist for this picking
+            attach_ids = self.pool['ir.attachment'].search(
+                cr, uid, [
+                    ('res_model','=','stock.picking'),
+                    ('res_id', '=', pick.id)], context=context)
+            if attach_ids:
+                label_ids = self.pool['shipping.label'].search(
+                    cr, uid, [('attachment_id', 'in', attach_ids)], context=context)
+                if label_ids:
+                    raise orm.except_orm(
+                        _('Error:'),
+                        _('Some labels already exist for the picking %s. '
+                            'Please delete the existing labels in the '
+                            'attachements of this picking and try again')
+                        % pick.name)
             france = True
             if pick.carrier_code in ['EI', 'AI', 'SO']:
                 france = False
@@ -463,20 +459,6 @@ class StockPicking(orm.Model):
                                                  context=context)
         return True
 
-    def _get_packages_from_moves(self, cr, uid, picking, context=None):
-        """ get all the packages from the move of the picking
-        """
-        move_ids = [move.id for move in picking.move_lines]
-        packages = []
-        move_ope_m = self.pool['stock.move.operation.link']
-        move_ope_ids = move_ope_m.search(
-            cr, uid, [('move_id', 'in', move_ids)], context=context)
-        for move_ope in move_ope_m.browse(
-                cr, uid, move_ope_ids, context=context):
-            if move_ope.operation_id.result_package_id:
-                packages.append(move_ope.operation_id.result_package_id)
-        return list(set(packages))
-
     def _get_xmlid(self, cr, uid, id):
         "only used in development"
         xml_id_dict = self.get_xml_id(cr, uid, [id])
@@ -530,13 +512,6 @@ class StockPicking(orm.Model):
 
     def get_shipping_cost(self, cr, uid, ids, context=None):
         return 0
-
-    def action_generate_carrier_label(self, cr, uid, ids, context=None):
-        raise orm.except_orm(
-            "Return label",
-            "Return Label is not implemented for "
-            "'Colissimo/So Colissimo' Coliposte \n"
-            "Ask us for service proposal, http://www.akretion.com/contact")
 
 
 class ShippingLabel(orm.Model):

@@ -12,12 +12,6 @@
         <field name="carrier_id" position="attributes">
             <attribute name="attrs">{'readonly': [('state','=','done')]}</attribute>
         </field>
-        <button name="action_generate_carrier_label" position="replace">
-            <button name="action_generate_carrier_label" type="object"
-                    states="assigned,confirmed,draft"
-                    string="Create Shipping Label"
-                    attrs="{'invisible': ['|', ('carrier_type', 'in', ['colissimo', 'so_colissimo'])]}"/>
-        </button>
         <xpath expr="//page[@string='Additional Info']//field[@name='carrier_code']"
                position="after">
             <group>

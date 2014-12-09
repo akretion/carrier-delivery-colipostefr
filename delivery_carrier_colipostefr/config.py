@@ -84,16 +84,16 @@ class ColiposteFrConfigSettings(orm.TransientModel):
                  "web service contient un message additionnel."),
         'repo_task_id': fields.related(
             'company_id', 'colipostefr_repo_task_id',
-            string='Tâche Edi',
+            string='Tâche EDI',
             relation='repository.task',
             type='many2one',
-            help="Liaison à la tâche qui exporte le fichier edi.\n"
+            help="Liaison à la tâche qui exporte le fichier EDI.\n"
                  "Ne pas créer de tâche spécifique ici.\n"
                  "La valeur par défaut pour la principale société d'Odoo "
                  "ne doit pas changer.\nUtilisez une tâche créée "
-                 "depuis le repository 'La Poste Edi'\n"
+                 "depuis le repository 'La Poste EDI'\n"
                  "(Configuration > File Exchange > File Repositories "
-                 "> La Poste Edi)"),
+                 "> La Poste EDI)"),
     }
 
     def _default_company(self, cr, uid, context=None):
@@ -181,15 +181,15 @@ class ColiposteFrConfigSettings(orm.TransientModel):
     #         "web service contient un message additionnel."),
     #repo_task_id = fields.Many2one(
     #    'repository.task',
-    #    string="Tâche Edi",
+    #    string="Tâche EDI",
     #    related='company_id.colipostefr_repo_task_id',
-    #    help="Liaison à la tâche qui exporte le fichier edi.\n"
+    #    help="Liaison à la tâche qui exporte le fichier EDI.\n"
     #         "Ne pas créer de tâche spécifique ici.\n"
     #         "La valeur par défaut pour la principale société d'Odoo "
     #         "ne doit pas changer.\nUtilisez une tâche créée "
-    #         "depuis le repository 'La Poste Edi'\n"
+    #         "depuis le repository 'La Poste EDI'\n"
     #         "(Configuration > File Exchange > File Repositories "
-    #         "> La Poste Edi)"),
+    #         "> La Poste EDI)"),
 
     #@api.onchange('company_id')
     #def change_company(self):
