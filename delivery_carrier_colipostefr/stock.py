@@ -194,7 +194,7 @@ class StockPicking(orm.Model):
                   'password': pick.company_id.colipostefr_password}
         if partner.country_id:
             sender['country'] = partner.country_id.name
-        fields = ['name', 'street', 'zip', 'city',
+        fields = ['name', 'street', 'street2', 'zip', 'city',
                   'phone', 'mobile', 'email']
         for elm in fields:
             sender[elm] = partner[elm]
