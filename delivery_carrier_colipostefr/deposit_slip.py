@@ -116,7 +116,9 @@ class DepositSlip(orm.Model):
                 country_code = ''
                 if address.country_id:
                     country_code = address.country_id.code
-                for pack in picking._get_packages_from_picking(picking):
+                    #import pdb;pdb.set_trace()
+                #for pack in picking._get_packages_from_picking(picking):
+                for pack in picking._get_packages_from_picking():
                     sequence = pack.parcel_tracking
                     weight = int(pack.weight*1000)
                     # TODO So Colissimo see correction in V7 branch
