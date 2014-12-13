@@ -23,7 +23,7 @@
 
         <!-- Resource: stock.inventory -->
         <record id="stock_inventory_coliposte" model="stock.inventory">
-            <field name="name">Starting Inventory</field>
+            <field name="name">ColiPoste Inventory</field>
         </record>
 
 

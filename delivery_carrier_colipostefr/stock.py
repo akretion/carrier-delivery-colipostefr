@@ -365,20 +365,17 @@ class StockPicking(orm.Model):
                     _("'Carrier code' is missing in '%s' delivery method"
                       % pick.carrier_type))
             # Check that labels don't already exist for this picking
-            attach_ids = self.pool['ir.attachment'].search(
-                cr, uid, [
-                    ('res_model','=','stock.picking'),
-                    ('res_id', '=', pick.id)], context=context)
-            if attach_ids:
-                label_ids = self.pool['shipping.label'].search(
-                    cr, uid, [('attachment_id', 'in', attach_ids)], context=context)
-                if label_ids:
-                    raise orm.except_orm(
-                        _('Error:'),
-                        _('Some labels already exist for the picking %s. '
-                            'Please delete the existing labels in the '
-                            'attachements of this picking and try again')
-                        % pick.name)
+            label_ids = self.pool['shipping.label'].search(
+                cr, uid, [('res_id', '=', pick.id),
+                          ('res_model', '=', 'stock.picking'),
+                          ], context=context)
+            if label_ids:
+                raise orm.except_orm(
+                    _('Error:'),
+                    _('Some labels already exist for the picking %s. '
+                        'Please delete the existing labels in the '
+                        'attachements of this picking and try again')
+                    % pick.name)
             france = True
             if pick.carrier_code in ['EI', 'AI', 'SO']:
                 france = False
