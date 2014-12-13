@@ -241,13 +241,12 @@ class StockPicking(orm.Model):
             # we do not call webservice to get these infos
             pack['sequence'] = self._get_sequence(
                 cr, uid, picking.carrier_code, context=context)
-            cab_suivi = service.get_cab_suivi(
+            pack['cab_suivi'] = service.get_cab_suivi(
                 pack['sequence'])
             pack['cab_prise_en_charge'] = \
                 self._barcode_prise_en_charge_generate(
-                    cr, uid, service, picking, cab_suivi, weight,
+                    cr, uid, service, picking, pack['cab_suivi'], weight,
                     option, context=context)
-            pack['cab_suivi'] = cab_suivi.replace(' ', '')
         return pack
 
     def _generate_coliposte_label(
@@ -280,6 +279,7 @@ class StockPicking(orm.Model):
             deliv.update(pack)
             deliv['ref_client'] = deliv['ref_client'].replace(
                 'pack_number', str(pack_number))
+            # get label
             label = self.get_zpl(service, sender, deliv, addr, option)
             filename = deliv['ref_client'].replace('/', '_')
             label_info.update({
@@ -306,7 +306,7 @@ class StockPicking(orm.Model):
             labels.append(label_info)
             pack_vals = {
                 'weight': pack['weight'],
-                'parcel_tracking': pack['cab_suivi'],
+                'parcel_tracking': pack['cab_suivi'].replace(' ', ''),
             }
             self.pool['stock.quant.package'].write(
                 cr, uid, packing.id, pack_vals, context=context)
