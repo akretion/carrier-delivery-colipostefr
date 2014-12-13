@@ -284,6 +284,7 @@ class StockPicking(orm.Model):
             filename = deliv['ref_client'].replace('/', '_')
             label_info.update({
                 'name': '%s.zpl' % filename,
+                'package_id': packing.id,
             })
             # allow to record a new test unit based on picking datas
             if picking.company_id.colipostefr_unittest_helper and france:
@@ -372,9 +373,9 @@ class StockPicking(orm.Model):
             if label_ids:
                 raise orm.except_orm(
                     _('Error:'),
-                    _('Some labels already exist for the picking %s. '
-                        'Please delete the existing labels in the '
-                        'attachements of this picking and try again')
+                    _('Some labels already exist for the picking %s.\n'
+                      'Please delete the existing labels in the '
+                      'attachements of this picking and try again')
                     % pick.name)
             france = True
             if pick.carrier_code in ['EI', 'AI', 'SO']:
