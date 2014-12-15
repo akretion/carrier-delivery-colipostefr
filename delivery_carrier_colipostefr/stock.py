@@ -181,7 +181,7 @@ class StockPicking(orm.Model):
             address['countryCode'] = pick.partner_id.country_id.code
         return address
 
-    def _prepare_delivery_postefr(self, cr, uid, pick, context=None):
+    def _prepare_delivery_postefr(self, cr, uid, pick, carrier, context=None):
         today = date.today().strftime('%d/%m/%Y')
         params = {
             'ref_client': pick.name,
@@ -191,7 +191,7 @@ class StockPicking(orm.Model):
         if pick.carrier_code not in ['EI', 'AI', 'SO']:
             params.update({
                 'cab_prise_en_charge': pick.colipostefr_prise_en_charge,
-                'cab_suivi': pick.carrier_tracking_ref,
+                'cab_suivi': carrier['carrier_tracking_ref'],
             })
         return params
 
@@ -269,12 +269,15 @@ class StockPicking(orm.Model):
                 # write is done 'stock.picking.out' to allow
                 # trigger connector job in projects prestashoperpconnect
                 # and magentoerpconnect
+                carr = dict(carrier)
+                carr['carrier_tracking_ref'] = \
+                    carrier['carrier_tracking_ref'].replace(' ', '')
                 self.pool['stock.picking.out'].write(
-                    cr, uid, [pick.id], carrier)
+                    cr, uid, [pick.id], carr)
                 pick = self.browse(cr, uid, pick.id, carrier)
             sender = self._prepare_sender_postefr(cr, uid, pick,
                                                   context=context)
-            delivery = self._prepare_delivery_postefr(cr, uid, pick,
+            delivery = self._prepare_delivery_postefr(cr, uid, pick, carrier,
                                                       context=context)
             label = {
                 'file_type': 'zpl2',
