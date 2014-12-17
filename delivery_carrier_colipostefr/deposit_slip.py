@@ -119,7 +119,7 @@ class DepositSlip(orm.Model):
                     #import pdb;pdb.set_trace()
                 #for pack in picking._get_packages_from_picking(picking):
                 for pack in picking._get_packages_from_picking():
-                    sequence = pack.parcel_tracking
+                    sequence = pack.parcel_tracking[2:-1]
                     weight = int(pack.weight*1000)
                     # TODO So Colissimo see correction in V7 branch
                     barcode_routage = ''
