@@ -109,10 +109,10 @@ class DepositSlip(orm.Model):
                     cr, uid, phone, mobile, context=context)
                 if not phone and not mobile and not address.email:
                     raise orm.except_orm(
-                        'Information manquante',
-                        "L'un des champs suivant ne doit pas être vide:\n"
-                        "mobile, phone, email\n"
-                        "(sous peine de surtaxation de La Poste)")
+                        u'Information manquante sur %s' % picking.name,
+                        u"L'un des champs suivant ne doit pas être vide:\n"
+                        u"mobile, phone, email\n"
+                        u"(sous peine de surtaxation de La Poste)")
                 country_code = ''
                 if address.country_id:
                     country_code = address.country_id.code
