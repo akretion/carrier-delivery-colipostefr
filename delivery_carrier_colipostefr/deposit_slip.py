@@ -161,10 +161,10 @@ class DepositSlip(orm.Model):
                 }
                 if not phone and not mobile and not address.email:
                     raise orm.except_orm(
-                        'Information manquante',
-                        "L'un des champs suivant ne doit pas être vide:\n"
-                        "mobile, phone, email\n"
-                        "(sous peine de surtaxation de La Poste)")
+                        u'Information manquante sur %s' % picking.name,
+                        u"L'un des champs suivant ne doit pas être vide:\n"
+                        u"mobile, phone, email\n"
+                        u"(sous peine de surtaxation de La Poste)")
                 # TODO  So Colissimo
                 # 'Référence chargeur' field is defined
                 # by delivery_carrier_label_so_colissimo module
@@ -182,7 +182,7 @@ class DepositSlip(orm.Model):
         return lines
 
     def create_csv(self, cr, uid, header, lines, context=None):
-        ENCODING='ISO-8859-1'
+        ENCODING = 'ISO-8859-1'
         f = StringIO()
         b = unicodecsv.DictWriter(f, [
             "Type d'enregistrement", "Identifiant du bordereau",
