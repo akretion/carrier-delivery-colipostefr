@@ -107,12 +107,16 @@ class DepositSlip(orm.Model):
                     cr, uid, address.mobile, context=context)
                 phone, mobile = self._coliposte_default_phone(
                     cr, uid, phone, mobile, context=context)
-                if not phone and not mobile and not address.email:
+                email = self._coliposte_default_mail(
+                    cr, uid, address.email, context=context)
+                if not phone and not mobile and not email:
                     raise orm.except_orm(
-                        'Information manquante',
-                        "L'un des champs suivant ne doit pas être vide:\n"
-                        "mobile, phone, email\n"
-                        "(sous peine de surtaxation de La Poste)")
+                        _(u"Information manquante sur le bon de "
+                            u"livraison %s : il faut renseigner au moins "
+                            u"le téléphone, le portable ou l'e-mail sur "
+                            u"le partenaire %s "
+                            u"pour éviter une surtaxation par La Poste)")
+                        % (picking.name, picking.partner_id.name))
                 country_code = ''
                 if address.country_id:
                     country_code = address.country_id.code
@@ -162,8 +166,7 @@ class DepositSlip(orm.Model):
                         "Franc de taxe et de droit": "N",
                         "Identifiant Colissimo du destinataire": '',
                         "Téléphone": phone,
-                        "Courriel": self._coliposte_default_mail(
-                            cr, uid, address.email, context=context),
+                        "Courriel": email,
                         "Téléphone portable": mobile,
                         "Code avoir/promotion": "",
                         "Type Alerte Destinataire": "",
