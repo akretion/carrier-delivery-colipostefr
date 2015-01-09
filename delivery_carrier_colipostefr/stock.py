@@ -297,7 +297,8 @@ class StockPicking(orm.Model):
                     label['file'] = modify_label_content(result[0])
                     carrier['carrier_tracking_ref'] = result[2]
                     carrier['colipostefr_prise_en_charge'] = result[3]
-                    self.write(cr, uid, [pick.id], carrier)
+                    self.pool['stock.picking.out'].write(
+                        cr, uid, [pick.id], carrier)
                     pick = self.browse(cr, uid, ids, context=context)[0]
                     if result[1]:
                         self._create_comment(cr, uid, pick, result[1],
