@@ -123,17 +123,28 @@ class StockPicking(orm.Model):
             cr, uid, ids, context=context)
 
     def set_pack_weight(self, cr, uid, picking, context=None):
-        package_ids = self._get_packages_from_picking(
-            cr, uid, picking.id, context=context)
-        for pack in self.pool['stock.quant.package'].browse(
-                cr, uid, package_ids, context=context):
-            # compute weight
-            weight = 0.0
-            for quant in pack.quant_ids:
-                weight += quant.product_id.weight * quant.qty
-            if pack.ul_id:
-                weight += pack.ul_id.weight
-            pack.write({'weight': weight})
+        pack_weights = {}
+        # key = pack ID, value = {'ul_weight': 0.5, 'product_weight': 2.5}
+        # compute weight
+        # I cannot loop on the "quant_ids" of packages, because, at this step,
+        # this field doesn't have a value yet
+        for packop in picking.pack_operation_ids:
+            pack = packop.result_package_id
+            if pack:
+                if pack.id not in pack_weights:
+                    pack_weights[pack.id] = {
+                        'ul_weight': 0.0,
+                        'product_weight': 0.0,
+                        }
+                pack_weights[pack.id]['product_weight'] +=\
+                    packop.product_id.weight * packop.product_qty
+                if pack.ul_id and not pack_weights[pack.id]['ul_weight']:
+                    pack_weights[pack.id]['ul_weight'] = pack.ul_id.weight
+        # Write weight on packages
+        for pack_id, sdict in pack_weights.iteritems():
+            weight = sdict['ul_weight'] + sdict['product_weight']
+            self.pool['stock.quant.package'].write(
+                cr, uid, pack_id, {'weight': weight}, context=context)
         return
 
     def send_douane_doc(self, cr, uid, ids, field_n, arg, context=None):
@@ -529,3 +540,24 @@ class ShippingLabel(orm.Model):
         selection.append(('zpl2', 'ZPL2'))
         selection = list(set(selection))
         return selection
+
+
+class StockQuantPackage(orm.Model):
+    _inherit = 'stock.quant.package'
+
+    def open_laposte_tracking_url(self, cr, uid, ids, context=None):
+        assert len(ids) == 1, 'Only 1 ID'
+        pack = self.browse(cr, uid, ids[0], context=context)
+        if not pack.parcel_tracking:
+            raise orm.except_orm(
+                _('Error:'),
+                _("Cannot open La Poste tracking URL because this package "
+                    "doesn't have a tracking number."))
+        action = {
+            'type': 'ir.actions.act_url',
+            'url':
+            'http://www.colissimo.fr/portail_colissimo/suivre.do?colispart=%s'
+            % pack.parcel_tracking,
+            'target': 'new',
+            }
+        return action
