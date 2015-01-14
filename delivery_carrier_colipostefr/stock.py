@@ -58,14 +58,14 @@ def map_except_message(message):
         message = message.replace(key, val)
     if 'commercial afin de reinitialiser votre compte client' in message:
         message += ("\n\nEn gros à ce stade, "
-                    "si vous avez saisi correctement votre identifiant"
-                    "et mot de passe transmis par votre commercial"
-                    "\nil est probable que ce dernier"
-                    "n'a pas terminé le boulot jusqu'au bout"
-                    "\nVraisemblablement, vous allez passez encore beaucoup"
-                    "de temps à faire la balle de ping pong entre les"
-                    "services: commercial, ADV et Support Intégration Clients."
-                    "\nCe dernier est probablement votre meilleur chance."
+                    "si vous avez saisi correctement votre identifiant "
+                    "et mot de passe transmis par votre commercial, "
+                    "\nil est probable que ce dernier "
+                    "n'a pas terminé le boulot jusqu'au bout."
+                    "\nVraisemblablement, vous allez passer encore beaucoup "
+                    "de temps à faire la balle de ping pong entre les "
+                    "services : commercial, ADV et Support Intégration Clients."
+                    "\nCe dernier est probablement votre meilleure chance."
                     "\nun homme averti en vaut deux"
                     "\nBougez avec la poste"
                     "\nBonne chance\n\n(the developer team)")
