@@ -262,7 +262,8 @@ class DepositSlip(orm.Model):
                 'direction': 'output',
                 'task_id': task_id,
                 'datas': datas,
-                'datas_fname': name
+                'datas_fname': name,
+                'file_type': 'export',
                 }
 
     def create_file_document(
@@ -271,8 +272,8 @@ class DepositSlip(orm.Model):
         company = deposit.picking_ids[0].company_id
         create_date = datetime.strptime(
             deposit.create_date, DEFAULT_SERVER_DATETIME_FORMAT)
-        create_date_format = datetime.strftime(create_date, "%Y%m%d.%H%M")
-        name = "%s.%s" % (company.colipostefr_account, create_date_format)
+        create_date_format = datetime.strftime(create_date, "%Y%m%d.%H%M%S")
+        name = "%s.%s_001.tmp" % (company.colipostefr_account, create_date_format)
         unencrypted_string = self.create_csv(
             cr, uid, header, lines, context=context)
         unencrypted_datas = base64.encodestring(unencrypted_string)
