@@ -34,6 +34,7 @@
         'document',
         'file_repository',
         'delivery_carrier_deposit',
+        'intrastat_base',
     ],
     'description': """
 Delivery Carrier ColiPoste

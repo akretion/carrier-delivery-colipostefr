@@ -29,7 +29,7 @@
     'depends': [
         'delivery_carrier_colipostefr',
         'delivery_carrier_deposit',
-        'l10n_fr_intrastat_product',
+        'intrastat_product',
     ],
     'description': """
 Delivery Carrier Label Colissimo
