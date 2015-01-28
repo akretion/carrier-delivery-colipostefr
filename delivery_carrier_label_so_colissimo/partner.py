@@ -138,7 +138,7 @@ class PartnerDropoffSite(orm.Model):
                     zip,
                     now(),
                     True,
-                    False,
+                    'none',
                     %s
                 FROM partner_tmp_dropoff_coliposte
                 WHERE code in (
