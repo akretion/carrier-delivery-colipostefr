@@ -14,7 +14,8 @@ from cStringIO import StringIO
 import time
 
 # TODO clean this dirty code
-
+# TODO the street2 and street3 should be merge into the tmp table
+# this will avoid costing post processing step during update
 
 class FileDocument(orm.Model):
     _inherit = "file.document"
@@ -23,15 +24,13 @@ class FileDocument(orm.Model):
         ""
         super(FileDocument, self).import_datas(cr, uid, file_doc,
                                                context=context)
-        print 'Begin', time.ctime()
-        import pdb;pdb.set_trace()
         # TODO manage execption_messages returned by this method
         self.send_datas_in_temp_table(
             cr, uid, file_doc, context=context)
-        import pdb;pdb.set_trace()
-        self.pool['partner.dropoff.site'].write_or_create_dropoff_site(
+        self.pool['partner.dropoff.site'].refresh_dropoff_site(
             cr, uid, context=context)
 
+    #TODO Refactor this method and remove the hashkey (is not needed anymore)
     def send_datas_in_temp_table(self, cr, uid, file_doc, context=None):
         header = [
             'code', 'name', 'street', 'street2', 'street3',
@@ -62,7 +61,7 @@ class FileDocument(orm.Model):
                     "Le fichier est vide. Pas de mise à jour")
             # first line must not be imported
             line = str_io.readline()
-            print 'Début tmp', time.ctime()
+            #print 'Début tmp', time.ctime()
             while line:
                 if line[:2] == 'PR':
                     # replace ',' by ';' and add quote to columns
@@ -93,10 +92,10 @@ class FileDocument(orm.Model):
                             #raise Exception(
                             #    EXCEPT_MESSAGE + ''.join(sql_error_messages))
                 else:
-                    print 'break Tmp'
+                    #print 'break Tmp'
                     break
                 line = str_io.readline()
-            print ' end while Tmp', time.ctime()
+            #print ' end while Tmp', time.ctime()
             #if sql_error_messages:
             #    return sql_error_messages
         return False

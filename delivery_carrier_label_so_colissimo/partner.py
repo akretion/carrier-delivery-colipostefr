@@ -13,10 +13,13 @@ from openerp.osv import orm, fields
 from openerp.tools.translate import _
 import csv
 import time
+import logging
+_logger = logging.getLogger(__name__)
 
 TEMP_TABLE = 'partner_tmp_dropoff_coliposte'
 
 # TODO clean this dirty code
+# TODO remove useless haskey (before refactor massive insertion in tmp table)
 
 
 def UnicodeDictReader(utf8_data, **kwargs):
@@ -56,137 +59,137 @@ class PartnerDropoffSite(orm.Model):
     _name = 'partner.dropoff.site'
     _dropoff_type = 'colipostefr'
 
-    def get_required_fields(self, cr, uid, context=None):
-        required_but_default_val = (
-            'notification_email_send',
-            'property_account_receivable',
-            'property_account_payable')
-        required_fields = [
-            (field, value)
-            for field, value in self.pool['res.partner']._columns.items()
-            if value.required is True
-            and field not in required_but_default_val]
-        required_but_taken_account = (
-            'dropoff_type',
-            'partner_id')
-        required_fields.extend([
-            (field, value)
-            for field, value in self._columns.items()
-            if value.required is True
-            and field not in required_but_taken_account
-        ])
-        return required_fields
+    def refresh_dropoff_site(self, cr, uid, context=None):
+        __, country_id = self.pool['ir.model.data'].\
+            get_object_reference(cr, uid, 'base', 'fr')
 
-    def write_or_create_dropoff_site(
-            self, cr, uid, context=None):
-        """
-        trouver es manque
-        """
-        # search dropoff in both table
-        query = "SELECT id, code, hashkey FROM %s"
-        cr.execute(query % TEMP_TABLE)
-        new_dropoff = {code: {'id': id, 'hash': hash}
-                       for id, code, hash in cr.fetchall()}
-        param = "%s WHERE dropoff_type = '%s'" \
-                % (self._table, self._dropoff_type)
-        cr.execute(query % param)
-        original_dropoff = {code: {'id': id, 'hash': hash}
-                            for id, code, hash in cr.fetchall()}
-        dropoff_to_create = list(
-            set(new_dropoff.keys()) - set(original_dropoff.keys()))
-        intersection = list(
-            set(new_dropoff.keys()) & set(original_dropoff.keys()))
-        dropoff_to_update = [
-            str(x)
-            for x in intersection
-            if new_dropoff[x]['hash'] != original_dropoff[x]['hash']]
-        dropoff_to_update = tuple(dropoff_to_update)
-        print '\n\n   len dropoff to CREATE', len(dropoff_to_create)
-        print '\n\n   len dropoff to UPDATE', len(dropoff_to_update)
-        print 'Pause du progamme pendant 5 secondes\n------------------------'
-        time.sleep(5)
-        # initial creation of missing dropoff
-        print 'before get_required_fields'
-        required_fields = self.get_required_fields(cr, uid)
-        print required_fields, time.ctime()
-        vals = {
-            # TODO evaluate if 'carrier_partner_id' is really needed
-            #'carrier_partner_id': pool['ir.model.data'].get_object_reference(
-            #cr, uid, 'delivery_carrier_colipostefr', 'partner_la_poste')[1],
-            'dropoff_type': self._dropoff_type,
-        }
-        #test sql
-        vals_part = {
-            'notification_email_send': 'none',
-            'country_id': self.pool['ir.model.data'].get_object_reference(
-                cr, uid, 'base', 'fr')[1],
-        }
-        vals_drop = {
-            'dropoff_type': self._dropoff_type,
-        }
-        field1 = ['name', 'notification_email_send', ]
-        required_fields_name = vals.keys() + ['partner_id']
-        for elm in required_fields:
-            field, model = elm[0], elm[1]
-            if field not in required_fields_name:
-                if model._type in ('char', 'text'):
-                    vals[field] = ' '
-                if model._type in ('integer', 'float'):
-                    vals[field] = 0
-                if model._type in ('many2one'):
-                    # TODO add a method to override specific values
-                    raise Exception(
-                        _("Many2one field '%s' is required but no data "
-                          "is defined to insert into 'res.partner/%s' tables"
-                          % (field, self._name)))
-        print 'start to create', time.ctime()
-        import pdb;pdb.set_trace()
-        counter_created = 0
-        q1 = "INSERT INTO res_partner (id, active, name, "
-        "notification_email_send) VALUES (%s, True, ' ', 'none')"
-        q2 = "INSERT INTO partner_dropoff_site (id, dropoff_type, code, "
-        "partner_id) VALUES (%s, 'colipostefr', %s, %s)"
-        q3 = "UPDATE res_partner SET dropoff_site_id = %s WHERE id=%s"
-        for code in dropoff_to_create:
-            counter_created += 1
-            vals['code'] = code
-            cr.execute("SELECT nextval('res_partner_id_seq')")
-            partner_id = cr.fetchone()[0]
-            cr.execute(q1 % partner_id)
-            #cr.execute(q2 % (code, "currval('res_partner_id_seq'::regclass)"))
-            cr.execute("SELECT nextval('partner_dropoff_site_id_seq')")
-            dropoff_id = cr.fetchone()[0]
-            cr.execute(q2 % (dropoff_id, code, partner_id))
-            cr.execute(q3 % (dropoff_id, partner_id))
-            #id = self.create(cr, uid, vals, context=context)
-            original_dropoff[code] = {'id': dropoff_id}
-            #print 'created id', dropoff_id
-            if counter_created % 100 == 0:
-                print 'commit 100 dropoffsite', counter_created,
-                print '\ntime:', time.ctime()
-                cr.commit()
-        cr.commit()
-        # dropoff update for the whole dropoffs
-        fields = ['code', 'city', 'latitude', 'longitude', 'name',
-                  'street', 'street2', 'subtype', 'weight', 'zip', 'hashkey']
-        query = "SELECT %s FROM %s WHERE code IN %s " \
-                % (', '.join(fields), TEMP_TABLE, dropoff_to_update)
-        print 'start to fetch whole data'
-        cr.execute(query)
-        result = cr.fetchall()
-        print time.ctime()
-        print 'start to write'
-        import pdb;pdb.set_trace()
-        for res in result:
-            vals = {}
-            vals = {fields[idx]: val
-                    for idx, val in enumerate(res)}
-            if vals:
-                self.write(cr, uid, original_dropoff[res[0]]['id'], vals,
-                           context=context)
-                print original_dropoff[res[0]], 'vals', vals
-                print 'writed', time.ctime()
-        print 'the end'
+        _logger.info('Start to update existing dropoffsite')
+        #UPDATE EXISTING DROPOFF SITE
+        cr.execute("""
+            UPDATE res_partner as p SET
+                name=tmp.name,
+                ref=tmp.code,
+                street=tmp.street,
+                street2=tmp.street2,
+                city=tmp.city,
+                zip=tmp.zip
+                FROM partner_tmp_dropoff_coliposte AS tmp
+                    JOIN partner_dropoff_site
+                        ON partner_dropoff_site.code = tmp.code
+                            AND partner_dropoff_site.dropoff_type = %s
+                WHERE
+                    p.ref = tmp.code
+                    AND p.id = partner_dropoff_site.partner_id
+                    AND (
+                        p.name != tmp.name
+                        OR p.ref != tmp.code
+                        OR p.street != tmp.street
+                        OR p.street2 != tmp.street2
+                        OR p.city != tmp.city
+                        OR p.zip != tmp.zip
+                        )
+            """, (self._dropoff_type,))
+
+        cr.execute("""
+            UPDATE partner_dropoff_site as d SET
+                weight=tmp.weight,
+                lot_routing=tmp.lot_routing,
+                longitude=tmp.longitude,
+                subtype=tmp.subtype,
+                latitude=tmp.latitude,
+                distri_sort=tmp.distri_sort,
+                version_plan=tmp.version_plan
+                FROM partner_tmp_dropoff_coliposte AS tmp
+                WHERE
+                    d.code = tmp.code
+                    AND d.dropoff_type = %s
+                    AND (
+                        d.weight != tmp.weight
+                        OR d.lot_routing != tmp.lot_routing
+                        OR d.longitude != tmp.longitude
+                        OR d.subtype != tmp.subtype
+                        OR d.latitude != tmp.latitude
+                        OR d.distri_sort != tmp.distri_sort
+                        OR d.version_plan != tmp.version_plan
+                        )
+            """, (self._dropoff_type,))
+
+        _logger.info('Updating done start massive insertion')
+        #INSERT MISSING DROPOFF SITE
+        cr.execute("""
+            WITH partner AS (
+                INSERT INTO res_partner(
+                    name,
+                    ref,
+                    street,
+                    street2,
+                    city,
+                    zip,
+                    create_date,
+                    active,
+                    notification_email_send,
+                    country_id)
+                SELECT
+                    name,
+                    code,
+                    street,
+                    street2,
+                    city,
+                    zip,
+                    now(),
+                    True,
+                    False,
+                    %s
+                FROM partner_tmp_dropoff_coliposte
+                WHERE code in (
+                    SELECT tmp.code
+                        FROM partner_tmp_dropoff_coliposte as tmp
+                            LEFT JOIN partner_dropoff_site as drop
+                                ON drop.code = tmp.code
+                                AND drop.dropoff_type = %s
+                        WHERE drop.code is NULL)
+                RETURNING id as partner_id, ref
+                )
+            , dropoff AS (
+                INSERT INTO partner_dropoff_site(
+                    partner_id,
+                    code,
+                    weight,
+                    lot_routing,
+                    longitude,
+                    subtype,
+                    latitude,
+                    distri_sort,
+                    version_plan,
+                    create_date,
+                    dropoff_type)
+                SELECT
+                    partner_id,
+                    ref, weight,
+                    lot_routing,
+                    longitude,
+                    subtype,
+                    latitude,
+                    distri_sort,
+                    version_plan,
+                    now(),
+                    %s
+                FROM partner
+                    JOIN partner_tmp_dropoff_coliposte
+                        ON partner_tmp_dropoff_coliposte.code = partner.ref
+                RETURNING id
+                )
+            SELECT count(id) FROM dropoff""",
+            (country_id, self._dropoff_type, self._dropoff_type))
+        res = cr.fetchone()
+        _logger.info('Insert %s new dropoffsite', res[0])
+
+        #Fill the many2one on the res_partner
+        cr.execute("""UPDATE res_partner
+            SET dropoff_site_id = partner_dropoff_site.id
+            FROM partner_dropoff_site
+            WHERE partner_dropoff_site.partner_id = res_partner.id
+                AND dropoff_site_id IS DISTINCT FROM partner_dropoff_site.id""")
         return True
 
 
