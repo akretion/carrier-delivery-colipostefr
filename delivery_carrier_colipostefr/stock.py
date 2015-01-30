@@ -229,7 +229,13 @@ class StockPicking(orm.Model):
         # compute weight
         weight = 0
         pack_op_ids = pack_op_obj.search(
-            cr, uid, [('result_package_id', '=', packing.id)],
+            cr, uid,
+            ['|',
+             '&',
+             ('package_id', '=', packing.id),
+             ('result_package_id', '=', False),
+             ('result_package_id', '=', packing.id),
+             ],
             context=context)
         for pack_op in pack_op_obj.browse(
                 cr, uid, pack_op_ids, context=context):
