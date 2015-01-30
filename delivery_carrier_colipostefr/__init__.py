@@ -14,3 +14,4 @@ from . import deposit_slip
 from . import stock
 from . import stock_transfer
 from . import file_document
+from . import stock_quant_package
