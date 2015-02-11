@@ -225,17 +225,8 @@ class StockPicking(orm.Model):
     def _prepare_pack_postefr(
             self, cr, uid, packing, picking, option, service, france,
             weight=None, context=None):
-        pack_op_obj = self.pool['stock.pack.operation']
-        # compute weight
-        weight = 0
-        pack_op_ids = pack_op_obj.search(
-            cr, uid, [('result_package_id', '=', packing.id)],
-            context=context)
-        for pack_op in pack_op_obj.browse(
-                cr, uid, pack_op_ids, context=context):
-            weight += pack_op.product_id.weight * pack_op.product_qty
-        if packing.ul_id:
-            weight += packing.ul_id.weight
+        package_obj = self.pool['stock.quant.package']
+        weight = package_obj.get_weight(cr, uid, [packing.id], context=context)
         pack = {'weight': weight}
         if france:
             # we do not call webservice to get these infos
