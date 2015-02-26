@@ -12,6 +12,9 @@
     <field name="direction">out</field>
     <field name="type">export</field>
     <field name="repository_id" ref="file_repository_for_laposte_edi"/>
+    <field name="rename_after_send" eval="True"/>
+    <field name="rename_source_pattern">([\w\.\d_]+).tmp</field>
+    <field name="rename_target_pattern">\1.ok</field>
 </record>
 
 <record id="base.main_company" model="res.company">
