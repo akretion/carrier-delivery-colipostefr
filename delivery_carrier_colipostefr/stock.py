@@ -107,20 +107,22 @@ class StockPicking(orm.Model):
     def do_transfer(self, cr, uid, ids, context=None):
         """ Used by wizard stock_tranfert_details and js interface
         """
+        res = super(StockPicking, self).do_transfer(cr, uid, ids,
+                                                    context=context)
         for picking in self.browse(cr, uid, ids, context=context):
             if picking.carrier_type == 'colissimo':
                 self.set_pack_weight(cr, uid, picking, context=context)
-        return super(StockPicking, self).do_transfer(
-            cr, uid, ids, context=context)
+        return res
 
     def action_done(self, cr, uid, ids, context=None):
         """ Used by stock_picking_wave
         """
+        res = super(StockPicking, self).action_done(cr, uid, ids,
+                                                    context=context)
         for picking in self.browse(cr, uid, ids, context=context):
             if picking.carrier_type == 'colissimo':
                 self.set_pack_weight(cr, uid, picking, context=context)
-        return super(StockPicking, self).action_done(
-            cr, uid, ids, context=context)
+        return res
 
     def set_pack_weight(self, cr, uid, picking, context=None):
         # I cannot loop on the "quant_ids" of packages, because, at this step,
