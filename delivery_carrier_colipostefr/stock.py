@@ -123,28 +123,13 @@ class StockPicking(orm.Model):
             cr, uid, ids, context=context)
 
     def set_pack_weight(self, cr, uid, picking, context=None):
-        pack_weights = {}
-        # key = pack ID, value = {'ul_weight': 0.5, 'product_weight': 2.5}
-        # compute weight
         # I cannot loop on the "quant_ids" of packages, because, at this step,
         # this field doesn't have a value yet
         for packop in picking.pack_operation_ids:
-            pack = packop.result_package_id
-            if pack:
-                if pack.id not in pack_weights:
-                    pack_weights[pack.id] = {
-                        'ul_weight': 0.0,
-                        'product_weight': 0.0,
-                        }
-                pack_weights[pack.id]['product_weight'] +=\
-                    packop.product_id.weight * packop.product_qty
-                if pack.ul_id and not pack_weights[pack.id]['ul_weight']:
-                    pack_weights[pack.id]['ul_weight'] = pack.ul_id.weight
-        # Write weight on packages
-        for pack_id, sdict in pack_weights.iteritems():
-            weight = sdict['ul_weight'] + sdict['product_weight']
-            self.pool['stock.quant.package'].write(
-                cr, uid, pack_id, {'weight': weight}, context=context)
+            package = packop.result_package_id or packop.package_id
+            if package:
+                weight = package.get_weight()
+                package.write({'weight': weight})
         return
 
     def send_douane_doc(self, cr, uid, ids, field_n, arg, context=None):
