@@ -10,14 +10,13 @@
 
 from openerp.osv import orm
 from openerp.tools.translate import _
-from openerp.tools.misc import DEFAULT_SERVER_DATETIME_FORMAT as serv_date_format
+from openerp.tools import DEFAULT_SERVER_DATETIME_FORMAT
 from datetime import datetime
 import unicodecsv
 from cStringIO import StringIO
 from csv import Dialect
 from _csv import QUOTE_MINIMAL, register_dialect
 import base64
-from openerp.tools import misc
 
 # This code is used by Colissimo and So Colissimo
 # TODO this code is not fully updated for So Colissimo
@@ -42,7 +41,7 @@ class DepositSlip(orm.Model):
     def create_header_vals(self, cr, uid, deposit, context=None):
         company = deposit.picking_ids[0].company_id
         create_date = datetime.strptime(deposit.create_date,
-                                        misc.DEFAULT_SERVER_DATETIME_FORMAT)
+                                        DEFAULT_SERVER_DATETIME_FORMAT)
         create_date_format = datetime.strftime(create_date, "%Y%m%d%H%M")
         validate_date = datetime.strftime(datetime.now(), "%Y%m%d%H%M")
         vals = {
@@ -78,6 +77,29 @@ class DepositSlip(orm.Model):
         else:
             return ''
 
+    def name_formatting(self, cr, uid, address, context=None):
+        '''La Poste EDI specs page 12 : the field must contain
+        Title`Firstname`Lastname
+        Title can be 'M.' or 'MME', but the experience at Barroux Abbey
+        shows that any title can be used
+        '''
+        assert address, 'Address must not be empty'
+        name_split = address.name.split(' ')
+        if len(name_split) >= 2:
+            res = u'%s`%s' % (name_split[0], ' '.join(name_split[1:]))
+        else:
+            res = u'`%s' % address.name
+        if address.title:
+            if address.title.shortcut:
+                res = u'%s`%s' % (address.title.shortcut, res)
+            else:
+                res = u'%s`%s' % (address.title, res)
+        else:
+            res = u'%s`%s' % ('M.', res)
+        if len(res) > 37:  # max size is 35 + 2 x '`'
+            res = res[0:37]
+        return res
+
     def create_edi_lines(self, cr, uid, deposit, context=None):
         lines = []
         for picking in deposit.picking_ids:
@@ -92,40 +114,41 @@ class DepositSlip(orm.Model):
                 dropoff_code = None
                 # TODO So Colissimo see correction in V7 branch
                 # if picking.to_dropoff_site:
-                    # dropoff_code = dropoff_site.code
+                #     dropoff_code = dropoff_site.code
                 AR = "N"
                 if picking.carrier_code == "6C":
                     AR = "O"
-                name = address.name.replace(' ', '`')
-                if address.title:
-                    name = address.title.shortcut.replace('.', '') + "`" + name
-                else:
-                    name = "M`" + name
+                name = self.name_formatting(
+                    cr, uid, address, context=context)
                 phone = self.phone_number_formating(
                     cr, uid, address.phone, context=context)
                 mobile = self.phone_number_formating(
                     cr, uid, address.mobile, context=context)
                 phone, mobile = self._coliposte_default_phone(
                     cr, uid, phone, mobile, context=context)
-                if not phone and not mobile and not address.email:
+                email = self._coliposte_default_mail(
+                    cr, uid, address.email, context=context)
+                if not phone and not mobile and not email:
                     raise orm.except_orm(
-                        u'Information manquante sur %s' % picking.name,
-                        u"L'un des champs suivant ne doit pas être vide:\n"
-                        u"mobile, phone, email\n"
-                        u"(sous peine de surtaxation de La Poste)")
+                        _(u"Information manquante sur le bon de "
+                          u"livraison %s : il faut renseigner au moins "
+                          u"le téléphone, le portable ou l'e-mail sur "
+                          u"le partenaire %s "
+                          u"pour éviter une surtaxation par La Poste)")
+                        % (picking.name, picking.partner_id.name))
                 country_code = ''
                 if address.country_id:
                     country_code = address.country_id.code
-                    #import pdb;pdb.set_trace()
-                #for pack in picking._get_packages_from_picking(picking):
                 for pack in picking._get_packages_from_picking():
                     sequence = pack.parcel_tracking[2:-1]
                     weight = int(pack.weight*1000)
                     # TODO So Colissimo see correction in V7 branch
                     barcode_routage = ''
                     # if picking.coliss_barcode_routage:
-                    #     cab_label = pick.c_barcode_routage.replace(' ', '')[1:]
-                    #     cab_content = pick.c_barcode_routage.replace(' ','')[:-1]
+                    #     cab_label = pick.c_barcode_routage.replace(
+                    #         ' ', '')[1:]
+                    #     cab_content = pick.c_barcode_routage.replace(
+                    #         ' ','')[:-1]
                     #     barcode_routage = "%s`%s`%s`%s`%s" % (
                     #         dropoff_site.lot_routing,
                     #         dropoff_site.distri_sort,
@@ -150,7 +173,7 @@ class DepositSlip(orm.Model):
                         "Première ligne d’adresse": "",
                         "Seconde ligne d'adresse": "",
                         "Troisième ligne d'adresse": address.street,
-                        "Quatrième ligne d’adresse": "",
+                        "Quatrième ligne d’adresse": address.street2 or "",
                         "Code postal du destinataire": address.zip,
                         "Commune du destinataire": address.city,
                         "Commentaire 1": "",
@@ -162,8 +185,7 @@ class DepositSlip(orm.Model):
                         "Franc de taxe et de droit": "N",
                         "Identifiant Colissimo du destinataire": '',
                         "Téléphone": phone,
-                        "Courriel": self._coliposte_default_mail(
-                            cr, uid, address.email, context=context),
+                        "Courriel": email,
                         "Téléphone portable": mobile,
                         "Code avoir/promotion": "",
                         "Type Alerte Destinataire": "",
@@ -184,8 +206,8 @@ class DepositSlip(orm.Model):
         values = {}
         if deposit.carrier_type == 'so_colissimo':
             values = {
-                'Référence chargeur': picking.company_id.\
-                colipostefr_account_chargeur,
+                'Référence chargeur':
+                picking.company_id.colipostefr_account_chargeur,
                 "Code porte": address.door_code or "",
                 "Code porte 2": address.door_code2 or "",
                 "Interphone": address.intercom or "",
@@ -240,16 +262,18 @@ class DepositSlip(orm.Model):
                 'direction': 'output',
                 'task_id': task_id,
                 'datas': datas,
-                'datas_fname': name
+                'datas_fname': name,
+                'file_type': 'export',
                 }
 
     def create_file_document(
             self, cr, uid, header, lines, deposit, context=None):
         document_obj = self.pool['file.document']
         company = deposit.picking_ids[0].company_id
-        create_date = datetime.strptime(deposit.create_date, serv_date_format)
-        create_date_format = datetime.strftime(create_date, "%Y%m%d.%H%M")
-        name = "%s.%s" % (company.colipostefr_account, create_date_format)
+        create_date = datetime.strptime(
+            deposit.create_date, DEFAULT_SERVER_DATETIME_FORMAT)
+        create_date_format = datetime.strftime(create_date, "%Y%m%d.%H%M%S")
+        name = "%s.%s_001.tmp" % (company.colipostefr_account, create_date_format)
         unencrypted_string = self.create_csv(
             cr, uid, header, lines, context=context)
         unencrypted_datas = base64.encodestring(unencrypted_string)

@@ -104,6 +104,36 @@ def modify_label_content(content):
 class StockPicking(orm.Model):
     _inherit = 'stock.picking'
 
+    def do_transfer(self, cr, uid, ids, context=None):
+        """ Used by wizard stock_tranfert_details and js interface
+        """
+        res = super(StockPicking, self).do_transfer(cr, uid, ids,
+                                                    context=context)
+        for picking in self.browse(cr, uid, ids, context=context):
+            if picking.carrier_type == 'colissimo':
+                self.set_pack_weight(cr, uid, picking, context=context)
+        return res
+
+    def action_done(self, cr, uid, ids, context=None):
+        """ Used by stock_picking_wave
+        """
+        res = super(StockPicking, self).action_done(cr, uid, ids,
+                                                    context=context)
+        for picking in self.browse(cr, uid, ids, context=context):
+            if picking.carrier_type == 'colissimo':
+                self.set_pack_weight(cr, uid, picking, context=context)
+        return res
+
+    def set_pack_weight(self, cr, uid, picking, context=None):
+        # I cannot loop on the "quant_ids" of packages, because, at this step,
+        # this field doesn't have a value yet
+        for packop in picking.pack_operation_ids:
+            package = packop.result_package_id or packop.package_id
+            if package:
+                weight = package.get_weight()
+                package.write({'weight': weight})
+        return
+
     def send_douane_doc(self, cr, uid, ids, field_n, arg, context=None):
         result = {}
         for elm in self.browse(cr, uid, ids):
@@ -150,7 +180,7 @@ class StockPicking(orm.Model):
             ('07', '1050 €'), ('08', '1200 €'),
             ('09', '1350 €'), ('10', '1500 €'),
             # TODO Recommandation level
-            #('21', 'R1'), ('22', 'R2'), ('23', 'R3'),
+            # ('21', 'R1'), ('22', 'R2'), ('23', 'R3'),
         ],
             'Insurance',
             help="Insurance amount in € (add valorem)"),
@@ -216,7 +246,8 @@ class StockPicking(orm.Model):
         shipping_date = datetime.strptime(
             shipping_date, DEFAULT_SERVER_DATETIME_FORMAT)
         delivery = {
-            'ref_client': '%s-pack_number/%s' % (pick.name, number_of_packages),
+            'ref_client': '%s-pack_number/%s' % (
+                pick.name, number_of_packages),
             'date': shipping_date.strftime('%d/%m/%Y'),
             'parcel_total_number': number_of_packages,
         }
@@ -224,10 +255,8 @@ class StockPicking(orm.Model):
 
     def _prepare_pack_postefr(
             self, cr, uid, packing, picking, option, service, france,
-            weight=None, context=None):
-        package_obj = self.pool['stock.quant.package']
-        weight = package_obj.get_weight(cr, uid, [packing.id], context=context)
-        pack = {'weight': weight}
+            context=None):
+        pack = {}
         if france:
             # we do not call webservice to get these infos
             pack['sequence'] = self._get_sequence(
@@ -236,8 +265,8 @@ class StockPicking(orm.Model):
                 pack['sequence'])
             pack['cab_prise_en_charge'] = \
                 self._barcode_prise_en_charge_generate(
-                    cr, uid, service, picking, pack['cab_suivi'], weight,
-                    option, context=context)
+                    cr, uid, service, picking, pack['cab_suivi'],
+                    packing.weight, option, context=context)
         return pack
 
     def _generate_coliposte_label(
@@ -267,6 +296,7 @@ class StockPicking(orm.Model):
                 cr, uid, packing, picking, option, service, france,
                 context=context)
             pack['name'] = packing.name
+            pack['weight'] = packing.weight
             deliv.update(pack)
             deliv['ref_client'] = deliv['ref_client'].replace(
                 'pack_number', str(pack_number))
@@ -296,7 +326,6 @@ class StockPicking(orm.Model):
                 label_info['file'] = label
             labels.append(label_info)
             pack_vals = {
-                'weight': pack['weight'],
                 'parcel_tracking': pack['cab_suivi'].replace(' ', ''),
             }
             self.pool['stock.quant.package'].write(
@@ -498,3 +527,24 @@ class ShippingLabel(orm.Model):
         selection.append(('zpl2', 'ZPL2'))
         selection = list(set(selection))
         return selection
+
+
+class StockQuantPackage(orm.Model):
+    _inherit = 'stock.quant.package'
+
+    def open_laposte_tracking_url(self, cr, uid, ids, context=None):
+        assert len(ids) == 1, 'Only 1 ID'
+        pack = self.browse(cr, uid, ids[0], context=context)
+        if not pack.parcel_tracking:
+            raise orm.except_orm(
+                _('Error:'),
+                _("Cannot open La Poste tracking URL because this package "
+                    "doesn't have a tracking number."))
+        action = {
+            'type': 'ir.actions.act_url',
+            'url':
+            'http://www.colissimo.fr/portail_colissimo/suivre.do?colispart=%s'
+            % pack.parcel_tracking,
+            'target': 'new',
+            }
+        return action
