@@ -146,8 +146,3 @@ class StockPicking(orm.Model):
             sender['chargeur'] = \
                 pick.company_id.colipostefr_account_chargeur
         return sender
-
-    def _prepare_delivery_postefr(self, cr, uid, pick, context=None):
-        delivery = super(StockPicking, self)._prepare_delivery_postefr(
-            cr, uid, pick, context=context)
-        return delivery
