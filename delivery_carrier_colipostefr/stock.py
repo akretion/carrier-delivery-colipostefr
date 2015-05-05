@@ -56,18 +56,18 @@ def map_except_message(message):
     for key, val in webservice_mapping.items():
         message = message.replace(key, val)
     if 'commercial afin de reinitialiser votre compte client' in message:
-        message += ("\n\nEn gros à ce stade, "
-                    "si vous avez saisi correctement votre identifiant"
-                    "et mot de passe transmis par votre commercial"
-                    "\nil est probable que ce dernier"
-                    "n'a pas terminé le boulot jusqu'au bout"
-                    "\nVraisemblablement, vous allez passez encore beaucoup"
-                    "de temps à faire la balle de ping pong entre les"
-                    "services: commercial, ADV et Support Intégration Clients."
-                    "\nCe dernier est probablement votre meilleur chance."
-                    "\nun homme averti en vaut deux"
-                    "\nBougez avec la poste"
-                    "\nBonne chance\n\n(the developer team)")
+        message += (u"\n\nEn gros à ce stade, "
+                    u"si vous avez saisi correctement votre identifiant"
+                    u"\net mot de passe transmis par votre commercial"
+                    u"\nil est probable que ce dernier"
+                    u"n'a pas terminé le boulot jusqu'au bout"
+                    u"\nVraisemblablement, vous allez passez encore beaucoup"
+                    u"\nde temps à faire la balle de ping pong entre les"
+                    u"services: \ncommercial, ADV et Support Intégration Clients."
+                    u"\nCe dernier est probablement votre meilleur chance."
+                    u"\nun homme averti en vaut deux"
+                    u"\nBougez avec la poste"
+                    u"\nBonne chance\n\n(the developer team)")
     return message
 
 
