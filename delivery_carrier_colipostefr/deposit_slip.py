@@ -140,6 +140,10 @@ class DepositSlip(orm.Model):
                 if address.country_id:
                     country_code = address.country_id.code
                 for pack in picking._get_packages_from_picking():
+                    if not pack.parcel_tracking:
+                        raise orm.except_orm(
+                            _('Missing Parcel tracking on package %s')
+                            % pack.name)
                     sequence = pack.parcel_tracking[2:-1]
                     weight = int(pack.weight*1000)
                     # TODO So Colissimo see correction in V7 branch
