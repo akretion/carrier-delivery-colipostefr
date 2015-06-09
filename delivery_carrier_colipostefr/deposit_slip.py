@@ -130,6 +130,7 @@ class DepositSlip(orm.Model):
                     cr, uid, address.email, context=context)
                 if not phone and not mobile and not email:
                     raise orm.except_orm(
+                        _('Error'),
                         _(u"Information manquante sur le bon de "
                           u"livraison %s : il faut renseigner au moins "
                           u"le téléphone, le portable ou l'e-mail sur "
