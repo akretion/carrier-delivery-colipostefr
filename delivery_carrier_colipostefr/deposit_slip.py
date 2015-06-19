@@ -62,11 +62,11 @@ class DepositSlip(orm.Model):
 
     def _coliposte_default_phone(self, cr, uid, phone, mobile, context=None):
         "You can inherit to customize"
-        return (phone, mobile)
+        return (phone or '', mobile or '')
 
     def _coliposte_default_mail(self, cr, uid, mail, context=None):
         "You can inherit to customize"
-        return mail
+        return mail or ''
 
     def phone_number_formating(self, cr, uid, number, context=None):
         if number:
