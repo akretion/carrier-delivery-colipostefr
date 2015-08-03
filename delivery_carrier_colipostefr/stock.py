@@ -8,6 +8,7 @@
 #          Sébastien BEAU
 ##############################################################################
 
+
 from openerp.osv import orm, fields
 from openerp.tools.config import config
 from openerp.tools.translate import _
@@ -172,6 +173,8 @@ class StockPicking(orm.Model):
         address = {}
         for elm in ['name', 'city', 'zip', 'phone', 'mobile']:
             address[elm] = pick.partner_id[elm]
+        for char in ['-', ' ']:
+            address['zip'] = address['zip'].replace(char, '')
         # 3 is the number of fields street
         # 35 is the field street max length
         res = self.pool['res.partner']._get_split_address(
