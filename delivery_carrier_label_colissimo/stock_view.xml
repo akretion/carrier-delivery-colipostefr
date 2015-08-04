@@ -21,7 +21,7 @@
                 class="oe_link"
                 colspan="4"
                 help="3 exemplaires du document CN23 sont obligatoires pour l'Outre Mer, Andorre et l'étranger hors UE"
-                attrs="{'invisible': [('colipostefr_send_douane_doc', '=', False)]}"/>
+                attrs="{'invisible': [('colipostefr_send_douane_doc', '=', False), ('state', '!=', 'done')]}"/>
             <group>
             </group>
         </xpath>

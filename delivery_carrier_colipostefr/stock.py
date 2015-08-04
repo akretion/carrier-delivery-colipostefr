@@ -109,7 +109,7 @@ class AbstractColipostePicking(orm.AbstractModel):
         result = {}
         for elm in self.browse(cr, uid, ids):
             res = False
-            if elm.state == 'done' and elm.carrier_type == 'colissimo':
+            if elm.carrier_type == 'colissimo':
                 eu_country = False
                 if elm.partner_id.country_id \
                         and elm.partner_id.country_id.intrastat:
