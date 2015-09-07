@@ -122,7 +122,7 @@ class StockPicking(orm.Model):
     def _prepare_address_postefr(self, cr, uid, pick, context=None):
         address = super(StockPicking, self)._prepare_address_postefr(
             cr, uid, pick, context=context)
-        if pick.type == 'so_colissimo':
+        if pick.carrier_type == 'so_colissimo':
             address = self._partner_data_postefr(
                 cr, uid, pick.partner_id, 35, context=context)
             max_street_size = 35
