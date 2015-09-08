@@ -308,9 +308,6 @@ class StockPicking(orm.Model):
                                              context=None)
                 else:
                     label['file'] = result
-                    if config.options.get('debug_mode', True):
-                        # get file datas in clipboard for paste in zebra viewer
-                        service._copy2clipboard(label['file'])
             except (InvalidDataForMako,
                     InvalidKeyInTemplate,
                     InvalidWebServiceRequest,
