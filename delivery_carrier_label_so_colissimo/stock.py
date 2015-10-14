@@ -21,16 +21,12 @@ dropoff_mapping = {
 }
 
 
-class AbstractColipostePicking(orm.AbstractModel):
-    _inherit = 'abstract.coliposte.picking'
+class StockPicking(orm.Model):
+    _inherit = "stock.picking"
 
     _columns = {
         'colipostefr_barcode_routage': fields.char('Barcode Routage', size=64),
     }
-
-
-class StockPicking(orm.Model):
-    _inherit = "stock.picking"
 
     def action_done(self, cr, uid, ids, context=None):
         """
@@ -146,3 +142,11 @@ class StockPicking(orm.Model):
             sender['chargeur'] = \
                 pick.company_id.colipostefr_account_chargeur
         return sender
+
+
+class StockPickingOut(orm.Model):
+    _inherit = "stock.picking.out"
+
+    _columns = {
+        'colipostefr_barcode_routage': fields.char('Barcode Routage', size=64),
+    }

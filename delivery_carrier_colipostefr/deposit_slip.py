@@ -81,23 +81,21 @@ class DepositSlip(orm.Model):
         for picking in deposit.picking_ids:
             if picking.carrier_code not in ['EI', 'AI']:
                 address = picking.partner_id
-                # TODO So Colissimo
-                # dropoff_site = picking.dropoff_site_id
+                dropoff_site = None
+                if picking.final_partner_id:
+                    address = picking.final_partner_id
+                    dropoff_site = picking.partner_id.dropoff_site_id
                 non_machi = "N"
                 # TODO
                 # if picking.non_machinable:
                 #     non_machi = "O"
-                dropoff_code = ''
-                # TODO So Colissimo
-                # if picking.to_dropoff_site:
-                    # dropoff_code = dropoff_site.code
                 AR = "N"
                 if picking.carrier_code == "6C":
                     AR = "O"
                 weight = int(picking.weight*1000)
                 name = address.name.replace(' ', '`')
                 if address.title:
-                    name = address.title.shorcut.replace('.', '') + "`" + name
+                    name = address.title.shortcut.replace('.', '') + "`" + name
                 else:
                     name = "M`" + name
                 phone = self.phone_number_formating(
@@ -108,17 +106,6 @@ class DepositSlip(orm.Model):
                     cr, uid, phone, mobile, context=context)
                 barcode_routage = ""
                 sequence = picking.carrier_tracking_ref[2:-1].replace(' ', '')
-                # TODO So Colissimo
-                # if picking.coliss_barcode_routage:
-                #     cab_label = pick.c_barcode_routage.replace(' ', '')[1:]
-                #     cab_content = pick.c_barcode_routage.replace(' ','')[:-1]
-                #     barcode_routage = "%s`%s`%s`%s`%s" % (
-                #         dropoff_site.lot_routing,
-                #         dropoff_site.distri_sort,
-                #         dropoff_site.version_plan,
-                #         cab_label,
-                #         cab_content
-                #     )
                 country_code = ''
                 if address.country_id:
                     country_code = address.country_id.code
@@ -128,7 +115,7 @@ class DepositSlip(orm.Model):
                     "Code produit": picking.carrier_code,
                     "Numéro du colis": sequence,
                     "Poids du colis": weight,
-                    "Code postal de livraison": address.zip,
+                    "Code postal de livraison": dropoff_site and dropoff_site.zip or address.zip,
                     "Contre-remboursement": 0,
                     "Devise Contre remboursement": "EUR",
                     "Assurance Ad Valorem": 0,
@@ -152,10 +139,10 @@ class DepositSlip(orm.Model):
                     "Franc de taxe et de droit": "N",
                     # TODO
                     "Identifiant Colissimo du destinataire": "",
-                    "Téléphone": phone,
+                    "Téléphone": phone or mobile,
                     "Courriel": self._coliposte_default_mail(
                         cr, uid, address.email, context=context),
-                    "Téléphone portable": mobile,
+                    "Téléphone portable": mobile or phone,
                     "Code avoir/promotion": "",
                     "Type Alerte Destinataire": "",
                 }
@@ -165,19 +152,31 @@ class DepositSlip(orm.Model):
                         u"L'un des champs suivant ne doit pas être vide:\n"
                         u"mobile, phone, email\n"
                         u"(sous peine de surtaxation de La Poste)")
-                # TODO  So Colissimo
+
                 # 'Référence chargeur' field is defined
                 # by delivery_carrier_label_so_colissimo module
                 if deposit.carrier_type == 'so_colissimo':
-                    so_colissimo = {
+                    routage = picking.colipostefr_barcode_routage
+                    if routage:
+                        cab_label = routage.replace(' ', '')[1:]
+                        cab_content = routage.replace(' ','')[:-1]
+                        barcode_routage = "%s`%s`%s`%s`%s" % (
+                            dropoff_site.lot_routing,
+                            dropoff_site.distri_sort,
+                            dropoff_site.version_plan,
+                            cab_label,
+                            cab_content
+                        )
+                        vals["Information de routage"] = barcode_routage
+                    vals.update({
                         'Référence chargeur': picking.company_id.\
                         colipostefr_account_chargeur,
                         "Code porte": address.door_code or "",
                         "Code porte 2": address.door_code2 or "",
                         "Interphone": address.intercom or "",
-                        "Identifiant du point de retrait": dropoff_code or "",
-                    }
-                    vals.update(so_colissimo)
+                        "Identifiant du point de retrait":\
+                            dropoff_site and dropoff_site.code or "",
+                    })
                 lines.append(vals)
         return lines
 
