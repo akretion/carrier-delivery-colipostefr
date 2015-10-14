@@ -173,6 +173,10 @@ class StockPicking(orm.Model):
         address = {}
         for elm in ['name', 'city', 'zip', 'phone', 'mobile']:
             address[elm] = pick.partner_id[elm]
+        if not address['phone']:
+            address['phone'] = address['mobile']
+        elif not address['mobile']:
+            address['mobile'] = address['phone']
         for char in ['-', ' ']:
             address['zip'] = address['zip'].replace(char, '')
         # 3 is the number of fields street
