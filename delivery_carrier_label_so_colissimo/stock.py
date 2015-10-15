@@ -46,6 +46,8 @@ class StockPicking(orm.Model):
     def carrier_id_change(self, cr, uid, ids, carrier_id, context=None):
         res = super(StockPicking, self).carrier_id_change(
             cr, uid, ids, carrier_id, context=context)
+        if not carrier_id:
+            return res
         carrier = self.pool['delivery.carrier'].browse(
             cr, uid, carrier_id, context=context)
         if carrier.type == 'so_colissimo':
