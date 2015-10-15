@@ -96,6 +96,9 @@ class StockPicking(orm.Model):
         elif partner_id.name[0:16].lower() == 'espace cityssimo':
             address['name2'] = partner_id.name[17:]
             address['name'] = 'ESPACE CITYSSIMO'
+        elif partner_id.name[0:8].lower() == 'la poste':
+            address['name2'] = partner_id.name[9:]
+            address['name'] = 'LA POSTE'
         if 'name2' in address:
             # name2 max lenght is 30
             address['name2'] = address['name2'][:30]
