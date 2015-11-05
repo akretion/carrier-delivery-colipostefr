@@ -184,6 +184,10 @@ class StockPicking(orm.Model):
         res = self.pool['res.partner']._get_split_address(
             cr, uid, pick.partner_id, 3, 35, context=context)
         address['street'], address['street2'], address['street3'] = res
+        #remove bad characters from address for La poste web service
+        address['street'].replace('°', '  ')
+        address['street2'].replace('°', '  ')
+        address['street3'].replace('°', '  ')
         if pick.partner_id.country_id.code and pick.partner_id.country_id.code:
             address['countryCode'] = pick.partner_id.country_id.code
         return address
