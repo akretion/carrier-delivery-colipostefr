@@ -130,7 +130,7 @@ class DepositSlip(orm.Model):
                     "Quatrième ligne d’adresse": "",
                     "Code postal du destinataire": address.zip,
                     "Commune du destinataire": address.city,
-                    "Commentaire 1": "",
+                    "Commentaire 1": picking.name,
                     "Information de routage": barcode_routage,
                     "Code Pays Destinataire": country_code,
                     "Niveau de recommandation": "",
