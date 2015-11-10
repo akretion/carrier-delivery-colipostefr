@@ -177,6 +177,8 @@ class StockPicking(orm.Model):
             address['phone'] = address['mobile']
         elif not address['mobile']:
             address['mobile'] = address['phone']
+        if not address.get('zip'):
+            address['zip'] = ''
         for char in ['-', ' ']:
             address['zip'] = address['zip'].replace(char, '')
         # 3 is the number of fields street
