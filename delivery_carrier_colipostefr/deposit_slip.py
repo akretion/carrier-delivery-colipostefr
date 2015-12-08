@@ -130,6 +130,7 @@ class DepositSlip(orm.Model):
                     "Quatrième ligne d’adresse": "",
                     "Code postal du destinataire": address.zip,
                     "Commune du destinataire": address.city,
+                    "Référence chargeur": picking.name,
                     "Commentaire 1": "",
                     "Information de routage": barcode_routage,
                     "Code Pays Destinataire": country_code,
@@ -169,8 +170,8 @@ class DepositSlip(orm.Model):
                         )
                         vals["Information de routage"] = barcode_routage
                     vals.update({
-                        'Référence chargeur': picking.company_id.\
-                        colipostefr_account_chargeur,
+                        #'Référence chargeur': picking.company_id.\
+                        # colipostefr_account_chargeur,
                         "Code porte": address.door_code or "",
                         "Code porte 2": address.door_code2 or "",
                         "Interphone": address.intercom or "",
