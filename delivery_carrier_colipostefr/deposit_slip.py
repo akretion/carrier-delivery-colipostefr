@@ -154,8 +154,6 @@ class DepositSlip(orm.Model):
                         u"mobile, phone, email\n"
                         u"(sous peine de surtaxation de La Poste)")
 
-                # 'Référence chargeur' field is defined
-                # by delivery_carrier_label_so_colissimo module
                 if deposit.carrier_type == 'so_colissimo':
                     routage = picking.colipostefr_barcode_routage
                     if routage:
@@ -170,8 +168,6 @@ class DepositSlip(orm.Model):
                         )
                         vals["Information de routage"] = barcode_routage
                     vals.update({
-                        #'Référence chargeur': picking.company_id.\
-                        # colipostefr_account_chargeur,
                         "Code porte": address.door_code or "",
                         "Code porte 2": address.door_code2 or "",
                         "Interphone": address.intercom or "",
