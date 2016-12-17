@@ -120,7 +120,8 @@ class AbstractColipostePicking(orm.AbstractModel):
                     eu_country = True
                 if elm.carrier_code in ['8Q', '7Q']:
                     res = True
-                if elm.carrier_code in LAPOSTE_INTER and not eu_country:
+                if (elm.carrier_code in LAPOSTE_INTER and
+                        elm.carrier_code != 'COLI' and not eu_country):
                     res = True
                 elif elm.carrier_code in ['9V', '9L'] \
                         and elm.partner_id.country_id \
