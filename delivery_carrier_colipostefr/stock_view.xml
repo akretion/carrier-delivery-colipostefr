@@ -24,7 +24,7 @@
         <xpath expr="//page[@name='carrier']/field[@name='carrier_code']"
                position="after">
             <group>
-                <field name="colipostefr_insur_recomm"
+                <field name="laposte_insurance"
                        attrs="{'readonly': [('state','=','done')], 'invisible': ['|',('carrier_type','not in', ['so_colissimo', 'colissimo']), '&amp;', ('carrier_type','=','colissimo'),('carrier_code','not in',['7Q', '9V', 'EI'])]}"
                        class="oe_inline"/>
             </group>

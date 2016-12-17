@@ -16,6 +16,7 @@ from openerp.tools.translate import _
 from laposte_api.colissimo_and_so import (
     ColiPoste,
     InvalidDataForMako,
+    InvalidDataForLaposteInter,
     InvalidWebServiceRequest)
 
 from laposte_api.exception_helper import (
@@ -32,6 +33,8 @@ from laposte_api.exception_helper import (
 from datetime import date
 
 EXCEPT_TITLE = "'Colissimo and So' library Exception"
+LAPOSTE_INTER = ['EI', 'AI', 'SO', 'COLI']
+LAPOSTE_NEW_WS = ['COLI']
 
 
 def raise_exception(orm, message):
@@ -117,7 +120,7 @@ class AbstractColipostePicking(orm.AbstractModel):
                     eu_country = True
                 if elm.carrier_code in ['8Q', '7Q']:
                     res = True
-                if elm.carrier_code in ['EI', 'AI', 'SO'] and not eu_country:
+                if elm.carrier_code in LAPOSTE_INTER and not eu_country:
                     res = True
                 elif elm.carrier_code in ['9V', '9L'] \
                         and elm.partner_id.country_id \
@@ -145,16 +148,17 @@ class AbstractColipostePicking(orm.AbstractModel):
       (issu de l'avant dernier caractère)
     - clé de contrôle du code barre actuel sur 1 numérique
     """),
-        'colipostefr_insur_recomm': fields.selection([
+        'laposte_insurance': fields.selection([
             ('01', '150 €'), ('02', '300 €'), ('03', '450 €'),
             ('04', '600 €'), ('05', '750 €'), ('06', '900 €'),
             ('07', '1050 €'), ('08', '1200 €'),
             ('09', '1350 €'), ('10', '1500 €'),
-            # TODO Recommandation level
-            #('21', 'R1'), ('22', 'R2'), ('23', 'R3'),
         ],
-            'Insurance',
+            'Insurance', oldname="colipostefr_insur_recomm",
             help="Insurance amount in € (add valorem)"),
+        'laposte_recommande': fields.selection(
+            [(None, None)], string=u'Recommandé',
+            help="Only used in v8: here to keep the same api"),
         'colipostefr_send_douane_doc': fields.function(
             send_douane_doc,
             string='Send douane document',
@@ -186,7 +190,7 @@ class StockPicking(orm.Model):
         res = self.pool['res.partner']._get_split_address(
             cr, uid, pick.partner_id, 3, 35, context=context)
         address['street'], address['street2'], address['street3'] = res
-        #remove bad characters from address for La poste web service
+        # remove bad characters from address for La poste web service
         address['street'] = address['street'].replace(u'°', '  ')
         address['street2'] = address['street2'].replace(u'°', '  ')
         address['street3'] = address['street3'].replace(u'°', '  ')
@@ -201,7 +205,7 @@ class StockPicking(orm.Model):
             'weight': pick.weight,
             'date': today,
         }
-        if pick.carrier_code not in ['EI', 'AI', 'SO']:
+        if pick.carrier_code not in LAPOSTE_INTER:
             params.update({
                 'cab_prise_en_charge': pick.colipostefr_prise_en_charge,
                 'cab_suivi': carrier['carrier_tracking_ref'],
@@ -214,9 +218,9 @@ class StockPicking(orm.Model):
             for opt in pick.option_ids:
                 opt_key = str(opt.tmpl_option_id['code'].lower())
                 option[opt_key] = True
-        if pick.colipostefr_insur_recomm:
+        if pick.laposte_insurance:
             # TODO improve this mechanism option
-            option['insurance'] = pick.colipostefr_insur_recomm
+            option['insurance'] = pick.laposte_insurance
         return option
 
     def _prepare_sender_postefr(self, cr, uid, pick, context=None):
@@ -243,7 +247,7 @@ class StockPicking(orm.Model):
     def _generate_coliposte_label(self, cr, uid, ids, pick, context=None):
         if pick.carrier_code:
             france = True
-            if pick.carrier_code in ['EI', 'AI', 'SO']:
+            if pick.carrier_code in LAPOSTE_INTER:
                 france = False
             carrier = {}
             try:
@@ -306,16 +310,23 @@ class StockPicking(orm.Model):
                         carrier['colipostefr_prise_en_charge'])
                 result = service.get_label(
                     sender, delivery, address, option)
-                if pick.carrier_code in ['EI', 'AI', 'SO']:
-                    label['file'] = modify_label_content(result[0])
-                    carrier['carrier_tracking_ref'] = result[2]
-                    carrier['colipostefr_prise_en_charge'] = result[3]
+                if pick.carrier_code in LAPOSTE_INTER:
+                    if pick.carrier_code in LAPOSTE_NEW_WS:
+                        # nouveau web service
+                        self.check_laposte_response(pick, result)
+                        self.extract_new_ws_info(
+                            cr, uid, pick, result, carrier,
+                            label, context=context)
+                    else:
+                        label['file'] = modify_label_content(result[0])
+                        carrier['carrier_tracking_ref'] = result[2]
+                        carrier['colipostefr_prise_en_charge'] = result[3]
+                        if result[1]:
+                            self._create_comment(
+                                cr, uid, pick, result[1], context=None)
                     self.pool['stock.picking.out'].write(
                         cr, uid, [pick.id], carrier)
                     pick = self.browse(cr, uid, ids, context=context)[0]
-                    if result[1]:
-                        self._create_comment(cr, uid, pick, result[1],
-                                             context=None)
                 else:
                     label['file'] = result
             except (InvalidDataForMako,
@@ -324,6 +335,7 @@ class StockPicking(orm.Model):
                     InvalidKeyInTemplate,
                     InvalidCountry,
                     InvalidZipCode,
+                    InvalidDataForLaposteInter,
                     InvalidSequence,
                     InvalidMissingField) as e:
                 raise_exception(orm, e.message)
@@ -334,6 +346,30 @@ class StockPicking(orm.Model):
                     raise orm.except_orm(
                         "'Colissimo and So' Library Error", e.message)
         return [label]
+
+    def extract_new_ws_info(
+            self, cr, uid, pick, result, carrier, label, context=None):
+        "Methode nouveau web service"
+        carrier['carrier_tracking_ref'] = result.get('parcelNumber')
+        label['file'] = result.get('label')
+        if result.get('cn23'):
+            cn23 = {
+                'name': 'cn23_%s.pdf' % result.get('parcelNumber'),
+                'res_id': pick.id,
+                'res_model': 'stock.picking.out',
+                'datas': result['cn23'].encode('base64'),
+                'type': 'binary'
+            }
+            self.pool['ir.attachment'].create(cr, uid, cn23, context=context)
+
+    def check_laposte_response(self, pick, result):
+        "Methode nouveau web service"
+        if pick.carrier_code in LAPOSTE_NEW_WS:
+            if isinstance(result, dict) and result.get('status') and \
+                    result['status'] == 'error':
+                mess = u"code tranporteur '%s'\nmessages '%s'" % (
+                    pick.carrier_code, result)
+                raise InvalidDataForLaposteInter(mess)
 
     def generate_shipping_labels(self, cr, uid, ids, tracking_ids=None,
                                  context=None):
@@ -386,7 +422,7 @@ class StockPicking(orm.Model):
         xml_id = False
         if xml_id_dict:
             xml_id = xml_id_dict[id]
-            xml_id = xml_id[xml_id.find('.')+1:]
+            xml_id = xml_id[xml_id.find('.') + 1:]
         return xml_id.replace('stock_picking_', '')
 
     def _get_sequence(self, cr, uid, label, context=None):
@@ -407,9 +443,10 @@ class StockPicking(orm.Model):
         if picking.carrier_code:
             infos = {
                 'zip': picking.partner_id.zip or '',
-                'countryCode': picking.partner_id
-                and picking.partner_id.country_id
-                and picking.partner_id.country_id.code or '',
+                'countryCode': (
+                    picking.partner_id and
+                    picking.partner_id.country_id and
+                    picking.partner_id.country_id.code or ''),
                 'weight': picking.weight,
                 'carrier_track': carrier_track,
             }
