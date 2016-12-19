@@ -101,3 +101,30 @@ class StockPicking(orm.Model):
             "articles": articles,
             "category": 3,  # commercial
         }
+
+
+class StockPickingOut(orm.Model):
+    _inherit = 'stock.picking.out'
+
+    def action_process(self, cr, uid, ids, context=None):
+        """Open the partial picking wizard"""
+        if context is None:
+            context = {}
+        IRDm = self.pool['ir.model.data']
+        for pick in self.browse(cr, uid, ids, context=context):
+            if pick.carrier_id and pick.carrier_id.id != (
+                    IRDm.get_object_reference(
+                    cr, uid, 'delivery_roulier_coliposte',
+                    'delivery_carrier_COLI')[1]):
+                continue
+            products = [x.product_id.name for x in pick.move_lines
+                        if not x.product_id.country_id]
+            if products:
+                raise orm.except_orm(
+                    u"Produits sans pays d'origine",
+                    u"Les produits suivant:\n\n %s\n\n n'ont pas de "
+                    u"pays d'origine spécifié.\n"
+                    u"Merci de compléter la fiche produit."
+                    % '\n'.join(products))
+        return super(StockPickingOut, self).action_process(
+            cr, uid, ids, context=context)
