@@ -5,23 +5,23 @@
 
     <!-- DELIVERY CARRIER TEMPLATE OPTION -->
     <record id="carrier_opt_tmpl_ACK" model="delivery.carrier.template.option">
-        <field name="name">Acknowledgment</field>
+        <field name="name">Accusé de réception</field>
         <field name="code">ACK</field>
     </record>
 
     <record id="carrier_opt_tmpl_COD" model="delivery.carrier.template.option">
-        <field name="name">Shipping Cash On Delivery</field>
+        <field name="name">Paiement à la livraison</field>
         <field name="code">COD</field>
     </record>
 
     <record id="carrier_opt_tmpl_INS" model="delivery.carrier.template.option">
-        <field name="name">Insurance</field>
+        <field name="name">Assurance</field>
         <field name="code">INS</field>
     </record>
 
 
     <record id="delivery_carrier_COLI" model="delivery.carrier">
-        <field name="name">Colissimo Expert International</field>
+        <field name="name">COLI, Colissimo Expert International</field>
         <field name="type">colissimo</field>
         <field name="code">COLI</field>
         <field name="use_detailed_pricelist" eval="1"/>
@@ -30,7 +30,7 @@
         <field name="product_id" ref="delivery_carrier_colipostefr.product_product_la_poste"/>
     </record>
 
-     <record id="COLI_laposte_carrier_opt_tmpl_NM"
+    <record id="COLI_laposte_carrier_opt_tmpl_NM"
             model="delivery.carrier.option">
         <field name="readonly_flag" eval="True"/>
         <field name="mandatory" eval="False"/>
@@ -38,7 +38,6 @@
         <field name="carrier_id" ref="delivery_carrier_COLI"/>
         <field name="tmpl_option_id" ref="delivery_carrier_colipostefr.delivery_carrier_template_NM"/>
     </record>
-
     <record id="COLI_laposte_carrier_opt_tmpl_ACK"
             model="delivery.carrier.option">
         <field name="readonly_flag" eval="True"/>
