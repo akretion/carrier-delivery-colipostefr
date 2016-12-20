@@ -33,8 +33,22 @@ from datetime import date
 EXCEPT_TITLE = "'Colissimo and So' library Exception"
 
 
-def raise_exception(orm, message):
-    raise orm.except_orm(EXCEPT_TITLE, map_except_message(message))
+def raise_exception(orm, message, kwargs=None):
+    info = ''
+    if kwargs:
+        info = get_context_info(kwargs)
+    information = '%s\n\n%s' % (map_except_message(message), info)
+    raise orm.except_orm(EXCEPT_TITLE, information)
+
+
+def get_context_info(kwargs):
+    infos = u'Compte ColiPoste: %s\n' % kwargs.get('account', '')
+    if 'sender' in kwargs:
+        rattach = kwargs['sender'].get('support_city', '')
+        password = kwargs['sender'].get('password', '')
+        infos += u"Mot de passe: %s\n" % password
+        infos += u"Centre de rattachement: %s\n" % rattach
+    return infos
 
 
 def map_except_message(message):
@@ -55,19 +69,19 @@ def map_except_message(message):
         message = message.replace('(model: ' + key, '\n(check model: ' + val)
     for key, val in webservice_mapping.items():
         message = message.replace(key, val)
-    if 'commercial afin de reinitialiser votre compte client' in message:
-        message += (u"\n\nEn gros à ce stade, "
-                    u"si vous avez saisi correctement votre identifiant"
-                    u"\net mot de passe transmis par votre commercial"
-                    u"\nil est probable que ce dernier"
-                    u"n'a pas terminé le boulot jusqu'au bout"
-                    u"\nVraisemblablement, vous allez passez encore beaucoup"
-                    u"\nde temps à faire la balle de ping pong entre les"
-                    u"services: \ncommercial, ADV et Support Intégration Clients."
-                    u"\nCe dernier est probablement votre meilleur chance."
-                    u"\nun homme averti en vaut deux"
-                    u"\nBougez avec la poste"
-                    u"\nBonne chance\n\n(the developer team)")
+    # if 'commercial afin de reinitialiser votre compte client' in message:
+        # message += (u"\n\nEn gros à ce stade, "
+        #             u"si vous avez saisi correctement votre identifiant"
+        #             u"\net mot de passe transmis par votre commercial"
+        #             u"\nil est probable que ce dernier"
+        #             u"n'a pas terminé le boulot jusqu'au bout"
+        #             u"\nVraisemblablement, vous allez passez encore beaucoup"
+        #             u"\nde temps à faire la balle de ping pong entre les"
+        #             u"services: \ncommercial, ADV et Support Intégration Clients."
+        #             u"\nCe dernier est probablement votre meilleur chance."
+        #             u"\nun homme averti en vaut deux"
+        #             u"\nBougez avec la poste"
+        #             u"\nBonne chance\n\n(the developer team)")
     return message
 
 
@@ -316,7 +330,8 @@ class StockPicking(orm.Model):
                     InvalidZipCode,
                     InvalidSequence,
                     InvalidMissingField) as e:
-                raise_exception(orm, e.message)
+                kwargs = {'account': account, 'sender': sender}
+                raise_exception(orm, e.message, kwargs)
             except Exception as e:
                 if config.options.get('debug_mode', False):
                     raise
