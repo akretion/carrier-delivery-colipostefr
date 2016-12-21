@@ -12,6 +12,7 @@
 from openerp.osv import orm, fields
 from openerp.tools.config import config
 from openerp.tools.translate import _
+from unidecode import unidecode
 
 from laposte_api.colissimo_and_so import (
     ColiPoste,
@@ -192,9 +193,9 @@ class StockPicking(orm.Model):
             cr, uid, pick.partner_id, 3, 35, context=context)
         address['street'], address['street2'], address['street3'] = res
         # remove bad characters from address for La poste web service
-        address['street'] = address['street'].replace(u'°', '  ')
-        address['street2'] = address['street2'].replace(u'°', '  ')
-        address['street3'] = address['street3'].replace(u'°', '  ')
+        address['street'] = unidecode(address['street'].replace(u'°', '  '))
+        address['street2'] = unidecode(address['street2'].replace(u'°', '  '))
+        address['street3'] = unidecode(address['street3'].replace(u'°', '  '))
         if pick.partner_id.country_id.code and pick.partner_id.country_id.code:
             address['countryCode'] = pick.partner_id.country_id.code
         return address
