@@ -89,12 +89,16 @@ class StockPicking(orm.Model):
             product = line.product_id
             # stands for harmonized_system
             hs = product.product_tmpl_id.get_hs_code_recursively()
-
+            if not hs:
+                raise orm.except_orm(
+                    u"Déclaration d'échange de bien",
+                    u"Les propriétés DEB/DES (onglet Compta) du produit '%s' "
+                    u"ne sont pas correctement remplis." % product.name)
             article['quantity'] = '%.f' % line.product_qty
             article['weight'] = round(
                 line.product_id.weight_net, 3)
             article['originCountry'] = product.country_id.code
-            article['description'] = hs.description
+            article['description'] = hs.description or False
             article['hs'] = hs.intrastat_code
             article['value'] = product.list_price  # unit price is expected
         return {
