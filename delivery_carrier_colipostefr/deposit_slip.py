@@ -82,7 +82,10 @@ class DepositSlip(orm.Model):
             if picking.carrier_code not in ['EI', 'AI']:
                 address = picking.partner_id
                 dropoff_site = None
-                if picking.final_partner_id:
+                model = self.pool['ir.model'].search(
+                    cr, uid, [('model', '=', 'partner.dropoff.site')],
+                    context=context)
+                if model and picking.final_partner_id:
                     address = picking.final_partner_id
                     dropoff_site = picking.partner_id.dropoff_site_id
                 non_machi = "N"
