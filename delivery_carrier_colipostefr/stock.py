@@ -353,7 +353,7 @@ class StockPicking(orm.Model):
             self, cr, uid, pick, result, carrier, label, context=None):
         "Methode nouveau web service"
         carrier['carrier_tracking_ref'] = result.get('parcelNumber')
-        label['file'] = result.get('label')
+        label['file'] = result.get('label').replace('^LS0000', '^LS10')
         if result.get('cn23'):
             cn23 = {
                 'name': 'cn23_%s.pdf' % result.get('parcelNumber'),
