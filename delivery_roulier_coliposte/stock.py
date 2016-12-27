@@ -95,8 +95,8 @@ class StockPicking(orm.Model):
                     u"Les propriétés DEB/DES (onglet Compta) du produit '%s' "
                     u"ne sont pas correctement remplis." % product.name)
             article['quantity'] = '%.f' % line.product_qty
-            article['weight'] = round(
-                line.product_id.weight_net, 3)
+            weight = line.product_id.weight_net or line.product_id.weight or 0
+            article['weight'] = round(weight, 3)
             article['originCountry'] = product.country_id.code
             article['description'] = hs.description or False
             article['hs'] = hs.intrastat_code
