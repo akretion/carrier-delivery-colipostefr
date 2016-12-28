@@ -2,7 +2,7 @@
 # © 2017 David BEAL @ Akretion <david.beal@akretion.com>
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 
-from openerp.osv import orm, fields
+from openerp.osv import orm
 
 
 class ProductCategory(orm.Model):
@@ -33,13 +33,3 @@ class ProductTemplate(orm.Model):
         else:
             res = None
         return res
-
-
-class ProductProduct(orm.Model):
-    _inherit = 'product.product'
-
-    _columns = {
-        'seller_country': fields.related(
-            'seller_id', 'country_id', 'code',
-            string='Pays fourn.', type='char'),
-    }
