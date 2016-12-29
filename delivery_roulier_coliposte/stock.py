@@ -4,10 +4,49 @@
 
 from datetime import date
 from openerp.osv import orm
+from openerp.addons.delivery_carrier_colipostefr.stock import LAPOSTE_NEW_WS
+from laposte_api.colissimo_and_so import InvalidDataForLaposteInter
 
 
 class StockPicking(orm.Model):
     _inherit = 'stock.picking'
+
+    def _manage_new_webservice(self, cr, uid, pick, result, carrier,
+                               label, context=None):
+        super(StockPicking, self)._manage_new_webservice(
+            cr, uid, pick, result, carrier, label, context=context)
+        self.check_laposte_response(pick, result)
+        self.extract_new_ws_info(
+            cr, uid, pick, result, carrier, label, context=context)
+
+    def extract_new_ws_info(
+            self, cr, uid, pick, result, carrier, label, context=None):
+        "Methode nouveau web service"
+        carrier['carrier_tracking_ref'] = result.get('parcelNumber')
+        # ^LS (Label Shift) allows to shift all field
+        # positions to the left
+        # ^LS0000 is neutral position sent by web service
+        # ^LS0 is equivalant to ^LS0000
+        # ^LS-10 move all fields to the right
+        label['file'] = result.get('label').replace('^LS0000', '^LS10')
+        if result.get('cn23'):
+            cn23 = {
+                'name': 'CN23_%s.pdf' % result.get('parcelNumber'),
+                'res_id': pick.id,
+                'res_model': 'stock.picking.out',
+                'datas': result['cn23'].encode('base64'),
+                'type': 'binary'
+            }
+            self.pool['ir.attachment'].create(cr, uid, cn23, context=context)
+
+    def check_laposte_response(self, pick, result):
+        "Methode nouveau web service"
+        if pick.carrier_code in LAPOSTE_NEW_WS:
+            if isinstance(result, dict) and result.get('status') and \
+                    result['status'] == 'error':
+                mess = u"code tranporteur '%s'\nmessages '%s'" % (
+                    pick.carrier_code, result)
+                raise InvalidDataForLaposteInter(mess)
 
     def _prepare_delivery_postefr(self, cr, uid, pick, carrier, context=None):
         params = super(StockPicking, self)._prepare_delivery_postefr(

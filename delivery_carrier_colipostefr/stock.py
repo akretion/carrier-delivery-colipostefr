@@ -68,7 +68,8 @@ def map_except_message(message):
                     u"n'a pas terminé le boulot jusqu'au bout"
                     u"\nVraisemblablement, vous allez passez encore beaucoup"
                     u"\nde temps à faire la balle de ping pong entre les"
-                    u"services: \ncommercial, ADV et Support Intégration Clients."
+                    u"services: \ncommercial, ADV et "
+                    u"Support Intégration Clients."
                     u"\nCe dernier est probablement votre meilleur chance."
                     u"\nun homme averti en vaut deux"
                     u"\nBougez avec la poste"
@@ -314,11 +315,13 @@ class StockPicking(orm.Model):
                     sender, delivery, address, option)
                 if pick.carrier_code in LAPOSTE_INTER:
                     if pick.carrier_code in LAPOSTE_NEW_WS:
-                        # nouveau web service
-                        self.check_laposte_response(pick, result)
-                        self.extract_new_ws_info(
-                            cr, uid, pick, result, carrier,
-                            label, context=context)
+                        # nouveau web service géré
+                        # par delivery_roulier_coliposte
+                        # comme ça tout est déporté vers le nouveau module
+                        # les portage / backport v7/v8 sont rendu plus facile
+                        self._manage_new_webservice(
+                            cr, uid, pick, result, carrier, label,
+                            context=context)
                     else:
                         label['file'] = modify_label_content(result[0])
                         carrier['carrier_tracking_ref'] = result[2]
@@ -348,35 +351,6 @@ class StockPicking(orm.Model):
                     raise orm.except_orm(
                         "'Colissimo and So' Library Error", e.message)
         return [label]
-
-    def extract_new_ws_info(
-            self, cr, uid, pick, result, carrier, label, context=None):
-        "Methode nouveau web service"
-        carrier['carrier_tracking_ref'] = result.get('parcelNumber')
-        # ^LS (Label Shift) allows to shift all field
-        # positions to the left
-        # ^LS0000 is neutral position sent by web service
-        # ^LS0 is equivalant to ^LS0000
-        # ^LS-10 move all fields to the right
-        label['file'] = result.get('label').replace('^LS0000', '^LS10')
-        if result.get('cn23'):
-            cn23 = {
-                'name': 'cn23_%s.pdf' % result.get('parcelNumber'),
-                'res_id': pick.id,
-                'res_model': 'stock.picking.out',
-                'datas': result['cn23'].encode('base64'),
-                'type': 'binary'
-            }
-            self.pool['ir.attachment'].create(cr, uid, cn23, context=context)
-
-    def check_laposte_response(self, pick, result):
-        "Methode nouveau web service"
-        if pick.carrier_code in LAPOSTE_NEW_WS:
-            if isinstance(result, dict) and result.get('status') and \
-                    result['status'] == 'error':
-                mess = u"code tranporteur '%s'\nmessages '%s'" % (
-                    pick.carrier_code, result)
-                raise InvalidDataForLaposteInter(mess)
 
     def generate_shipping_labels(self, cr, uid, ids, tracking_ids=None,
                                  context=None):
@@ -422,6 +396,14 @@ class StockPicking(orm.Model):
                 self.pool['mail.message'].create(cr, uid, vals,
                                                  context=context)
         return True
+
+    def _manage_new_webservice(self, cr, uid, pick, result, carrier,
+                               label, context=None):
+        """ Override in new delivery_roulier_coliposte
+            On passe ici que si delivery_roulier_coliposte est installé
+            car sinon le carrier_code 'COLI' est dans ce dernier module
+        """
+        pass
 
     def _get_xmlid(self, cr, uid, id):
         "only used in development"
