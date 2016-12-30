@@ -38,6 +38,16 @@ class StockPicking(orm.Model):
                 'type': 'binary'
             }
             self.pool['ir.attachment'].create(cr, uid, cn23, context=context)
+        if result.get('xml_request') and \
+                pick.company_id.colipostefr_webservice_message:
+            xml = {
+                'name': 'laposte_traceability_%s.txt' % pick.name,
+                'res_id': pick.id,
+                'res_model': 'stock.picking.out',
+                'datas': result['xml_request'].encode('base64'),
+                'type': 'binary'
+            }
+            self.pool['ir.attachment'].create(cr, uid, xml, context=context)
 
     def check_laposte_response(self, pick, result):
         "Methode nouveau web service"

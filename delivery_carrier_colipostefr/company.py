@@ -53,9 +53,11 @@ class ResCompany(orm.Model):
                  "de nouveaux tests unitaires python"),
         'colipostefr_webservice_message': fields.boolean(
             'Enregistre les Messages du Webservice',
-            help="Pour ColiPoste International. \nSi coché, un commentaire "
-                 "sera créé dans le bon de livraison\nsi la réponse du "
-                 "web service contient un message additionnel."),
+            help=u"Pour ColiPoste International. \nSi coché, un commentaire "
+                 u"sera créé dans le bon de livraison\nsi la réponse du "
+                 u"web service contient un message additionnel.\n"
+                 u"De plus le fichier xml envoyé au web service "
+                 u"sera stocké dans les pièces jointes."),
         'colipostefr_repo_task_id': fields.many2one(
             'repository.task',
             string="Tâche Edi",
