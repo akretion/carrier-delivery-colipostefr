@@ -2,10 +2,14 @@
 # © 2017 David BEAL @ Akretion <david.beal@akretion.com>
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 
+import logging
 from datetime import date
+from laposte_api.colissimo_and_so import InvalidDataForLaposteInter
+
 from openerp.osv import orm
 from openerp.addons.delivery_carrier_colipostefr.stock import LAPOSTE_NEW_WS
-from laposte_api.colissimo_and_so import InvalidDataForLaposteInter
+
+_logger = logging.getLogger(__name__)
 
 
 class StockPicking(orm.Model):
@@ -54,20 +58,39 @@ class StockPicking(orm.Model):
         if pick.carrier_code in LAPOSTE_NEW_WS:
             if isinstance(result, dict) and result.get('status') and \
                     result['status'] == 'error':
-                mess = u"code tranporteur '%s'\nmessages '%s'" % (
-                    pick.carrier_code, result)
+                exceptions = u''
+                if result.get('message') and result['message'].get('message'):
+                    exceptions = [x.__dict__
+                                  for x in result['message']['message']]
+                mess = u"code transporteur '%s'\nmessages '%s'\n%s" % (
+                    pick.carrier_code, exceptions, result)
                 raise InvalidDataForLaposteInter(mess)
 
     def _prepare_delivery_postefr(self, cr, uid, pick, carrier, context=None):
         params = super(StockPicking, self)._prepare_delivery_postefr(
             cr, uid, pick, carrier, context=context)
+        articles_weight = 0
         if pick.carrier_code == 'COLI':
             params['date'] = date.today().strftime('%Y-%m-%d')
             params['customs'] = self._prepare_laposte_customs(
                 cr, uid, pick, context=context)
+            product_prices = params['customs'].pop('product_prices')
+            _logger.debug("Product Prices: %s" % product_prices)
+            if params['customs'].get('articles'):
+                articles_weight = [x['weight']
+                                   for x in params['customs']['articles']]
+            if params['weight'] < sum(articles_weight):
+                # le poids du picking se base sur le weight des stock moves
+                # qui sont pas modifiables donc on check la coherence
+                # avec les poids de la fiche produit qui sont modifiables
+                # le 0.1 est pour ~ l'emballage
+                params['weight'] = sum(articles_weight) + 0.1
+                _logger.debug("Weight: picking %s sum articles %s" % (
+                    pick.weight, sum(articles_weight)))
             params['totalAmount'] = '%.f' % (  # truncate to string
                 # totalAmount is in centimes
-                self._calc_picking_price(pick) * 100)
+                self._calc_picking_price(pick, product_prices) * 100)
+            _logger.debug("totalAmount: %s" % params['totalAmount'])
             params['options'] = self.pool['stock.picking'].browse(
                 cr, uid, pick.id, context=context)._laposte_get_options()
         return params
@@ -125,13 +148,21 @@ class StockPicking(orm.Model):
             sender['firstname'] = '.'
         return sender
 
-    def _calc_picking_price(self, pick):
-        return sum([x.product_id.list_price * x.product_qty
+    def _calc_picking_price(self, pick, product_prices):
+        return sum([(product_prices.get(x.product_id) or
+                     x.product_id.list_price * x.product_qty)
                     for x in pick.move_lines
                     if x.product_id])
 
     def _prepare_laposte_customs(self, cr, uid, pick, context=None):
         articles = []
+        product_prices = {}  # price per product in the sale order
+        if pick.move_lines:
+            # 99% du temps il y a une seule sale order par picking
+            sale_line_id = pick.move_lines[0].sale_line_id
+            if sale_line_id:
+                product_prices = self._get_product_prices(
+                    cr, uid, sale_line_id, context=context)
         for line in pick.move_lines:
             article = {}
             articles.append(article)
@@ -149,11 +180,22 @@ class StockPicking(orm.Model):
             article['originCountry'] = product.country_id.code
             article['description'] = hs.description or False
             article['hs'] = hs.intrastat_code
-            article['value'] = product.list_price  # unit price is expected
+            article['value'] = (
+                product_prices.get(product) or product.list_price)
         return {
             "articles": articles,
             "category": 3,  # commercial
+            "product_prices": product_prices,
         }
+
+    def _get_product_prices(self, cr, uid, sale_line_id, context=None):
+        prices = {}
+        sale = sale_line_id.order_id
+        if sale:
+            for line in sale.order_line:
+                prices[line.product_id] = (
+                    line.price_subtotal / line.product_uom_qty)
+        return prices
 
 
 class StockPickingOut(orm.Model):
