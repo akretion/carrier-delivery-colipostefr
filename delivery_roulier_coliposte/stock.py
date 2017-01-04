@@ -87,9 +87,7 @@ class StockPicking(orm.Model):
                 params['weight'] = sum(articles_weight) + 0.1
                 _logger.debug("Weight: picking %s sum articles %s" % (
                     pick.weight, sum(articles_weight)))
-            params['totalAmount'] = '%.f' % (  # truncate to string
-                # totalAmount is in centimes
-                self._calc_picking_price(pick, product_prices) * 100)
+            params['totalAmount'] = 2
             _logger.debug("totalAmount: %s" % params['totalAmount'])
             params['options'] = self.pool['stock.picking'].browse(
                 cr, uid, pick.id, context=context)._laposte_get_options()
@@ -193,8 +191,12 @@ class StockPicking(orm.Model):
         sale = sale_line_id.order_id
         if sale:
             for line in sale.order_line:
+                if 'price_subtotal_company_currency' in line._columns.keys():
+                    subtotal = line.price_subtotal_company_currency
+                else:
+                    subtotal = line.price_subtotal
                 prices[line.product_id] = (
-                    line.price_subtotal / line.product_uom_qty)
+                    subtotal / line.product_uom_qty)
         return prices
 
 
