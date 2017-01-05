@@ -178,6 +178,8 @@ class StockPicking(orm.Model):
 
     def _prepare_address_postefr(self, cr, uid, pick, context=None):
         address = {}
+        if context is None:
+            context = {}
         for elm in ['name', 'city', 'zip', 'phone', 'mobile']:
             address[elm] = pick.partner_id[elm]
         if not address['phone']:
@@ -188,6 +190,9 @@ class StockPicking(orm.Model):
             address['zip'] = ''
         for char in ['-', ' ']:
             address['zip'] = address['zip'].replace(char, '')
+        if pick.carrier_code == 'COLI':
+            context['carrier_code'] = 'COLI'
+            address['company'] = pick.partner_id.company
         # 3 is the number of fields street
         # 35 is the field street max length
         res = self.pool['res.partner']._get_split_address(
