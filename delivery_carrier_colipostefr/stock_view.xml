@@ -16,7 +16,7 @@
                position="after">
             <group>
                 <field name="colipostefr_send_douane_doc" attrs="{'invisible': True}"/>
-                <field name="colipostefr_insur_recomm"
+                <field name="laposte_insurance"
                        attrs="{'readonly': [('state','=','done')], 'invisible': ['|',('carrier_type','!=','colissimo'),'&amp;', ('carrier_type','=','colissimo'),('carrier_code','not in',['7Q', '9V', 'EI'])]}"
                        class="oe_inline"/>
             </group>

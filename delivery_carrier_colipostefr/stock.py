@@ -11,10 +11,13 @@
 from openerp.osv import orm, fields
 from openerp.tools.config import config
 from openerp.tools.translate import _
+from unidecode import unidecode
 from openerp.tools import DEFAULT_SERVER_DATETIME_FORMAT
+from roulier.exception import InvalidApiInput, CarrierError
 from laposte_api.colissimo_and_so import (
     ColiPoste,
     InvalidDataForMako,
+    InvalidDataForLaposteInter,
     InvalidWebServiceRequest)
 
 from laposte_api.exception_helper import (
@@ -32,6 +35,8 @@ from datetime import datetime
 
 EXCEPT_TITLE = "'Colissimo and So' library Exception"
 LABEL_TYPE = 'zpl2'
+LAPOSTE_INTER = ['EI', 'AI', 'SO', 'COLI']
+LAPOSTE_NEW_WS = ['COLI']
 
 
 def raise_exception(orm, message):
@@ -53,22 +58,24 @@ def map_except_message(message):
         'delivery': 'delivery order',
         'address': 'customer/partner'}
     for key, val in model_mapping.items():
-        message = message.replace('(model: ' + key, '\n(check model: ' + val)
+        message = unicode(message).replace(
+            '(model: ' + key, '\n(check model: ' + val)
     for key, val in webservice_mapping.items():
-        message = message.replace(key, val)
+        message = unicode(message).replace(key, val)
     if 'commercial afin de reinitialiser votre compte client' in message:
-        message += ("\n\nEn gros à ce stade, "
-                    "si vous avez saisi correctement votre identifiant"
-                    "et mot de passe transmis par votre commercial"
-                    "\nil est probable que ce dernier"
-                    "n'a pas terminé le boulot jusqu'au bout"
-                    "\nVraisemblablement, vous allez passez encore beaucoup"
-                    "de temps à faire la balle de ping pong entre les"
-                    "services: commercial, ADV et Support Intégration Clients."
-                    "\nCe dernier est probablement votre meilleur chance."
-                    "\nun homme averti en vaut deux"
-                    "\nBougez avec la poste"
-                    "\nBonne chance\n\n(the developer team)")
+        message += (u"\n\nEn gros à ce stade, "
+                    u"si vous avez saisi correctement votre identifiant"
+                    u"\net mot de passe transmis par votre commercial"
+                    u"\nil est probable que ce dernier"
+                    u"n'a pas terminé le boulot jusqu'au bout"
+                    u"\nVraisemblablement, vous allez passez encore beaucoup"
+                    u"\nde temps à faire la balle de ping pong entre les"
+                    u"services: \ncommercial, ADV et "
+                    u"Support Intégration Clients."
+                    u"\nCe dernier est probablement votre meilleur chance."
+                    u"\nun homme averti en vaut deux"
+                    u"\nBougez avec la poste"
+                    u"\nBonne chance\n\n(the developer team)")
     return message
 
 
@@ -110,6 +117,9 @@ class StockPicking(orm.Model):
         for picking in self.browse(cr, uid, ids, context=context):
             if picking.carrier_type == 'colissimo':
                 self.set_pack_weight(cr, uid, picking, context=context)
+                if picking.carrier_code in LAPOSTE_NEW_WS:
+                    self._check_products4new_ws(
+                        cr, uid, picking, context=context)
         return super(StockPicking, self).do_transfer(
             cr, uid, ids, context=context)
 
@@ -119,8 +129,26 @@ class StockPicking(orm.Model):
         for picking in self.browse(cr, uid, ids, context=context):
             if picking.carrier_type == 'colissimo':
                 self.set_pack_weight(cr, uid, picking, context=context)
+                if picking.carrier_code in LAPOSTE_NEW_WS:
+                    self._check_products4new_ws(
+                        cr, uid, picking, context=context)
         return super(StockPicking, self).action_done(
             cr, uid, ids, context=context)
+
+    def _check_products4new_ws(self, cr, uid, pick, context=None):
+        # one picking at once
+        if context is None:
+            context = {}
+        products = [x.product_id.name for x in pick.move_lines
+                    if not x.product_id.origin_country_id]
+        if products:
+            # On vérifie le PAYS d'ORIGINE
+            raise orm.except_orm(
+                u"Produits sans pays d'origine",
+                u"Les produits suivant:\n\n %s\n\n n'ont pas de "
+                u"pays d'origine spécifié.\n"
+                u"Merci de compléter la fiche produit."
+                % '\n'.join(products))
 
     def set_pack_weight(self, cr, uid, picking, context=None):
         pack_weights = {}
@@ -135,7 +163,7 @@ class StockPicking(orm.Model):
                     pack_weights[pack.id] = {
                         'ul_weight': 0.0,
                         'product_weight': 0.0,
-                        }
+                    }
                 pack_weights[pack.id]['product_weight'] +=\
                     packop.product_id.weight * packop.product_qty
                 if pack.ul_id and not pack_weights[pack.id]['ul_weight']:
@@ -159,7 +187,8 @@ class StockPicking(orm.Model):
                     eu_country = True
                 if elm.carrier_code in ['8Q', '7Q']:
                     res = True
-                if elm.carrier_code in ['EI', 'AI', 'SO'] and not eu_country:
+                if (elm.carrier_code in LAPOSTE_INTER and
+                        elm.carrier_code != 'COLI' and not eu_country):
                     res = True
                 elif elm.carrier_code in ['9V', '9L'] \
                         and elm.partner_id.country_id \
@@ -187,7 +216,7 @@ class StockPicking(orm.Model):
       (issu de l'avant dernier caractère)
     - clé de contrôle du code barre actuel sur 1 numérique
     """),
-        'colipostefr_insur_recomm': fields.selection([
+        'laposte_insurance': fields.selection([
             ('01', '150 €'), ('02', '300 €'), ('03', '450 €'),
             ('04', '600 €'), ('05', '750 €'), ('06', '900 €'),
             ('07', '1050 €'), ('08', '1200 €'),
@@ -195,8 +224,11 @@ class StockPicking(orm.Model):
             # TODO Recommandation level
             # ('21', 'R1'), ('22', 'R2'), ('23', 'R3'),
         ],
-            'Insurance',
+            'Insurance', oldname="colipostefr_insur_recomm",
             help="Insurance amount in € (add valorem)"),
+        'laposte_recommande': fields.selection(
+            [(None, None)], string=u'Recommandé',
+            help="Only used in v8: here to keep the same api"),
         'colipostefr_send_douane_doc': fields.function(
             send_douane_doc,
             string='Send douane document',
@@ -208,16 +240,49 @@ class StockPicking(orm.Model):
 
     def _prepare_address_postefr(self, cr, uid, pick, context=None):
         address = {}
+        if context is None:
+            context = {}
         for elm in ['name', 'city', 'zip', 'phone', 'mobile']:
             address[elm] = pick.partner_id[elm]
+        if not address['phone']:
+            address['phone'] = address['mobile']
+        elif not address['mobile']:
+            address['mobile'] = address['phone']
+        if not address.get('zip'):
+            address['zip'] = ''
+        for char in ['-', ' ']:
+            address['zip'] = address['zip'].replace(char, '')
+        if pick.carrier_code == 'COLI':
+            # context['carrier_code'] = 'COLI'
+            address['company'] = pick.partner_id.company_id.name
         # 3 is the number of fields street
         # 38 is the field street max length
         res = self.pool['res.partner']._get_split_address(
             cr, uid, pick.partner_id, 3, 38, context=context)
         address['street'], address['street2'], address['street3'] = res
+        # remove bad characters from address for La poste web service
+        address['street'] = unidecode(address['street'].replace(u'°', '  '))
+        address['street2'] = unidecode(address['street2'].replace(u'°', '  '))
+        address['street3'] = unidecode(address['street3'].replace(u'°', '  '))
         if pick.partner_id.country_id.code and pick.partner_id.country_id.code:
             address['countryCode'] = pick.partner_id.country_id.code
         return address
+
+    def _prepare_delivery_postefr(self, cr, uid, pick, number_of_packages,
+                                  context=None):
+        shipping_date = pick.min_date
+        if pick.date_done:
+            shipping_date = pick.date_done
+        shipping_date = datetime.strptime(
+            shipping_date, DEFAULT_SERVER_DATETIME_FORMAT)
+        delivery = {
+            'ref_client': '%s-pack_number/%s' % (
+                pick.name, number_of_packages),
+            'weight': pick.weight_net or pick.weight,
+            'date': shipping_date.strftime('%d/%m/%Y'),
+            'parcel_total_number': number_of_packages,
+        }
+        return delivery
 
     def _prepare_option_postefr(self, cr, uid, pick, context=None):
         option = {}
@@ -225,9 +290,9 @@ class StockPicking(orm.Model):
             for opt in pick.option_ids:
                 opt_key = str(opt.tmpl_option_id['code'].lower())
                 option[opt_key] = True
-        if pick.colipostefr_insur_recomm:
+        if pick.laposte_insurance:
             # TODO improve this mechanism option
-            option['insurance'] = pick.colipostefr_insur_recomm
+            option['insurance'] = pick.laposte_insurance
         return option
 
     def _prepare_sender_postefr(self, cr, uid, pick, context=None):
@@ -250,21 +315,6 @@ class StockPicking(orm.Model):
         if not france:
             return pick.company_id.colipostefr_world_account or account
         return account
-
-    def _prepare_delivery_postefr(self, cr, uid, pick, number_of_packages,
-                                  context=None):
-        shipping_date = pick.min_date
-        if pick.date_done:
-            shipping_date = pick.date_done
-        shipping_date = datetime.strptime(
-            shipping_date, DEFAULT_SERVER_DATETIME_FORMAT)
-        delivery = {
-            'ref_client': '%s-pack_number/%s' % (
-                pick.name, number_of_packages),
-            'date': shipping_date.strftime('%d/%m/%Y'),
-            'parcel_total_number': number_of_packages,
-        }
-        return delivery
 
     def _prepare_pack_postefr(
             self, cr, uid, packing, picking, option, service, france,
@@ -314,6 +364,7 @@ class StockPicking(orm.Model):
             deliv['ref_client'] = deliv['ref_client'].replace(
                 'pack_number', str(pack_number))
             # get label
+            # this var should be named result
             label = self.get_zpl(service, sender, deliv, addr, option)
             filename = deliv['ref_client'].replace('/', '_')
             label_info.update({
@@ -335,15 +386,22 @@ class StockPicking(orm.Model):
                 if label[1]:
                     self._create_comment(cr, uid, picking, label[1],
                                          context=context)
+            elif picking.carrier_code in LAPOSTE_NEW_WS:
+                self._manage_new_webservice(
+                    cr, uid, picking, label, carrier, label['label'],
+                    context=context)
+                label_info['file'] = label['label']['data']
+                pack['cab_suivi'] = unicode(label['tracking']['id'])
             else:
                 label_info['file'] = label
             labels.append(label_info)
-            pack_vals = {
-                'parcel_tracking': pack['cab_suivi'].replace(' ', ''),
-            }
-            self.pool['stock.quant.package'].write(
-                cr, uid, packing.id, pack_vals, context=context)
-            tracking_refs.append(pack['cab_suivi'])
+            if pack.get('cab_suivi'):
+                pack_vals = {
+                    'parcel_tracking': pack['cab_suivi'].replace(' ', ''),
+                }
+                self.pool['stock.quant.package'].write(
+                    cr, uid, packing.id, pack_vals, context=context)
+                tracking_refs.append(pack['cab_suivi'])
         pick_vals = {
             'number_of_packages': len(package_ids),
             'carrier_tracking_ref': 'see in packages',
@@ -368,6 +426,9 @@ class StockPicking(orm.Model):
                 InvalidDataForMako,
                 InvalidKeyInTemplate,
                 InvalidWebServiceRequest,
+                InvalidDataForLaposteInter,
+                InvalidApiInput,
+                CarrierError,
                 InvalidKeyInTemplate,
                 InvalidCountry,
                 InvalidZipCode,
@@ -379,7 +440,7 @@ class StockPicking(orm.Model):
                 raise
             else:
                 raise orm.except_orm(
-                    "'Colissimo and So' Library Error", e.message)
+                    "'Colissimo and So' Library Error", u'%s' % e.message)
         return result
 
     def _customize_postefr_picking(self, cr, uid, picking, context=None):
@@ -411,7 +472,7 @@ class StockPicking(orm.Model):
                       'attachements of this picking and try again')
                     % pick.name)
             france = True
-            if pick.carrier_code in ['EI', 'AI', 'SO']:
+            if pick.carrier_code in LAPOSTE_INTER:
                 france = False
             try:
                 account = self._get_account(
@@ -476,13 +537,21 @@ class StockPicking(orm.Model):
                                                  context=context)
         return True
 
+    def _manage_new_webservice(self, cr, uid, pick, result, carrier,
+                               label, context=None):
+        """ Override in new delivery_roulier_coliposte
+            On passe ici que si delivery_roulier_coliposte est installé
+            car sinon le carrier_code 'COLI' est dans ce dernier module
+        """
+        pass
+
     def _get_xmlid(self, cr, uid, id):
         "only used in development"
         xml_id_dict = self.get_xml_id(cr, uid, [id])
         xml_id = False
         if xml_id_dict:
             xml_id = xml_id_dict[id]
-            xml_id = xml_id[xml_id.find('.')+1:]
+            xml_id = xml_id[xml_id.find('.') + 1:]
         return xml_id.replace('stock_picking_', '')
 
     def _get_sequence(self, cr, uid, label, context=None):
@@ -495,7 +564,7 @@ class StockPicking(orm.Model):
         return sequence
 
     def _barcode_prise_en_charge_generate(
-            self, cr, uid, service, picking, carrier_track, weight, option,
+            self, cr, uid, service, picking, address, carrier_track, option,
             context=None):
         """
         :return: the second barcode
@@ -503,12 +572,15 @@ class StockPicking(orm.Model):
         if picking.carrier_code:
             infos = {
                 'zip': picking.partner_id.zip or '',
-                'countryCode': picking.partner_id
-                and picking.partner_id.country_id
-                and picking.partner_id.country_id.code or '',
-                'weight': weight,
+                'countryCode': (
+                    picking.partner_id and
+                    picking.partner_id.country_id and
+                    picking.partner_id.country_id.code or ''),
+                'weight': picking.weight,
                 'carrier_track': carrier_track,
             }
+            if '_specific_label' in address:
+                infos['_specific_label'] = True
             infos.update(option)
             try:
                 barcode = service.get_cab_prise_en_charge(infos)
@@ -559,5 +631,5 @@ class StockQuantPackage(orm.Model):
             'http://www.colissimo.fr/portail_colissimo/suivre.do?colispart=%s'
             % pack.parcel_tracking,
             'target': 'new',
-            }
+        }
         return action

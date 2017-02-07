@@ -20,7 +20,7 @@ class StockTransferDetails(models.TransientModel):
         #TODO forbid from js interface
         for item in self.item_ids:
             if self.picking_id.carrier_type in ('colissimo', 'so_colissimo'):
-                if not item.result_package_id:
+                if not (item.package_id or item.result_package_id):
                     raise Warning(
                         u"Pour le transporteur '%s' \ntous les produits "
                         u"à livrer \ndoivent être "

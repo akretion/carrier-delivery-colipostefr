@@ -62,11 +62,11 @@ class DepositSlip(orm.Model):
 
     def _coliposte_default_phone(self, cr, uid, phone, mobile, context=None):
         "You can inherit to customize"
-        return (phone, mobile)
+        return (phone or '', mobile or '')
 
     def _coliposte_default_mail(self, cr, uid, mail, context=None):
         "You can inherit to customize"
-        return mail
+        return mail or ''
 
     def phone_number_formating(self, cr, uid, number, context=None):
         if number:
@@ -140,6 +140,10 @@ class DepositSlip(orm.Model):
                 if address.country_id:
                     country_code = address.country_id.code
                 for pack in picking._get_packages_from_picking():
+                    if not pack.parcel_tracking:
+                        raise orm.except_orm(
+                            _('Missing Parcel tracking on package %s')
+                            % pack.name)
                     sequence = pack.parcel_tracking[2:-1]
                     weight = int(pack.weight*1000)
                     # TODO So Colissimo see correction in V7 branch
