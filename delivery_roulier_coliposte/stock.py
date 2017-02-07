@@ -72,29 +72,39 @@ class StockPicking(orm.Model):
     def _prepare_delivery_postefr(self, cr, uid, pick, carrier, context=None):
         params = super(StockPicking, self)._prepare_delivery_postefr(
             cr, uid, pick, carrier, context=context)
-        articles_weight = 0
         if pick.carrier_code == 'COLI':
             params['date'] = date.today().strftime('%Y-%m-%d')
-            params['customs'] = self._prepare_laposte_customs(
-                cr, uid, pick, context=context)
-            product_prices = params['customs'].pop('product_prices')
-            _logger.debug("Product Prices: %s" % product_prices)
-            if params['customs'].get('articles'):
-                articles_weight = [x['weight']
-                                   for x in params['customs']['articles']]
-            if params['weight'] < sum(articles_weight):
-                # le poids du picking se base sur le weight des stock moves
-                # qui sont pas modifiables donc on check la coherence
-                # avec les poids de la fiche produit qui sont modifiables
-                # le 0.1 est pour ~ l'emballage
-                params['weight'] = sum(articles_weight) + 0.1
-                _logger.debug("Weight: picking %s sum articles %s" % (
-                    pick.weight, sum(articles_weight)))
-            params['totalAmount'] = 2
-            _logger.debug("totalAmount: %s" % params['totalAmount'])
             params['options'] = self.pool['stock.picking'].browse(
                 cr, uid, pick.id, context=context)._laposte_get_options()
+            params['product_prices'] = {}  # price per product in the sale
+            if pick.sale_id:
+                # no sale_line_id in v8 != v7, we go on with sale_id
+                params['product_prices'] = self._get_sale_product_prices(
+                    cr, uid, pick.sale_id, context=context)
         return params
+
+    def _prepare_pack_postefr(
+            self, cr, uid, packing, pick, option, service, france,
+            product_prices=None, context=None):
+        pack = super(StockPicking, self)._prepare_pack_postefr(
+            cr, uid, packing, pick, option, service, france,
+            product_prices=product_prices, context=context)
+        if france:
+            return pack
+        articles_weight = 0
+        pack['customs'] = self._prepare_laposte_customs(
+            cr, uid, pick, packing, product_prices, context=context)
+        if pack['customs'].get('articles'):
+            articles_weight = [x['weight']
+                               for x in pack['customs']['articles']]
+        if packing.weight < sum(articles_weight):
+            # le poids du picking se base sur le weight des stock moves
+            # qui sont pas modifiables donc on check la coherence
+            # avec les poids de la fiche produit qui sont modifiables
+            # le 0.1 est pour ~ l'emballage
+            pack['weight'] = sum(articles_weight) + 0.1
+        pack['totalAmount'] = 2  # weird value for laposte
+        return pack
 
     def _laposte_get_options(self, cr, uid, ids, context=None):
         """Define options for the shipment.
@@ -155,14 +165,10 @@ class StockPicking(orm.Model):
                     for x in pick.move_lines
                     if x.product_id])
 
-    def _prepare_laposte_customs(self, cr, uid, pick, context=None):
+    def _prepare_laposte_customs(
+            self, cr, uid, pick, packing, product_prices, context=None):
         articles = []
-        product_prices = {}  # price per product in the sale order
-        if pick.sale_id:
-            # no sale_line_id in v8 != v7, we go on with sale_id
-            product_prices = self._get_sale_product_prices(
-                cr, uid, pick.sale_id, context=context)
-        for line in pick.move_lines:
+        for line in packing.get_operations():
             article = {}
             articles.append(article)
             product = line.product_id
@@ -184,7 +190,6 @@ class StockPicking(orm.Model):
         return {
             "articles": articles,
             "category": 3,  # commercial
-            "product_prices": product_prices,
         }
 
     def _get_sale_product_prices(self, cr, uid, sale_id, context=None):

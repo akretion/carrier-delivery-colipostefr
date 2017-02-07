@@ -278,7 +278,7 @@ class StockPicking(orm.Model):
         delivery = {
             'ref_client': '%s-pack_number/%s' % (
                 pick.name, number_of_packages),
-            'weight': pick.weight_net or pick.weight,
+            # 'weight': pick.weight_net or pick.weight,
             'date': shipping_date.strftime('%d/%m/%Y'),
             'parcel_total_number': number_of_packages,
         }
@@ -318,7 +318,7 @@ class StockPicking(orm.Model):
 
     def _prepare_pack_postefr(
             self, cr, uid, packing, picking, option, service, france,
-            context=None):
+            product_prices=None, context=None):
         pack = {}
         if france:
             # we do not call webservice to get these infos
@@ -357,7 +357,7 @@ class StockPicking(orm.Model):
             }
             pack = self._prepare_pack_postefr(
                 cr, uid, packing, picking, option, service, france,
-                context=context)
+                product_prices=delivery.get('product_prices'), context=context)
             pack['name'] = packing.name
             pack['weight'] = packing.weight
             deliv.update(pack)
