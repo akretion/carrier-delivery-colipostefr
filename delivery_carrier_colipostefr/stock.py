@@ -564,7 +564,7 @@ class StockPicking(orm.Model):
         return sequence
 
     def _barcode_prise_en_charge_generate(
-            self, cr, uid, service, picking, address, carrier_track, option,
+            self, cr, uid, service, picking, carrier_track, weight, option,
             context=None):
         """
         :return: the second barcode
@@ -576,11 +576,9 @@ class StockPicking(orm.Model):
                     picking.partner_id and
                     picking.partner_id.country_id and
                     picking.partner_id.country_id.code or ''),
-                'weight': picking.weight,
+                'weight': weight,
                 'carrier_track': carrier_track,
             }
-            if '_specific_label' in address:
-                infos['_specific_label'] = True
             infos.update(option)
             try:
                 barcode = service.get_cab_prise_en_charge(infos)
