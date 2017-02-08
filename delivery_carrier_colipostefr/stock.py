@@ -439,8 +439,11 @@ class StockPicking(orm.Model):
             if config.options.get('debug_mode', False):
                 raise
             else:
+                exc_mess = e.message
+                if isinstance(e.message, dict):
+                    exc_mess = unicode(e.message)
                 raise orm.except_orm(
-                    "'Colissimo and So' Library Error", u'%s' % e.message)
+                    "'Colissimo and So' Library Error", exc_mess)
         return result
 
     def _customize_postefr_picking(self, cr, uid, picking, context=None):
