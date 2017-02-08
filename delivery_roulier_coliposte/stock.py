@@ -192,10 +192,9 @@ class StockPicking(orm.Model):
             "category": 3,  # commercial
         }
 
-    def _get_sale_product_prices(self, cr, uid, sale_id, context=None):
+    def _get_sale_product_prices(self, cr, uid, sale, context=None):
         prices = {}
-        for line in self.pool['sale.order'].browse(
-                cr, uid, sale_id, context=context).order_line:
+        for line in sale.order_line:
             if 'price_subtotal_company_currency' in line._columns.keys():
                 subtotal = line.price_subtotal_company_currency
             else:
