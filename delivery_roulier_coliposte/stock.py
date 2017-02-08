@@ -195,11 +195,14 @@ class StockPicking(orm.Model):
     def _get_sale_product_prices(self, cr, uid, sale_id, context=None):
         prices = {}
         for line in self.pool['sale.order'].browse(
-                cr, uid, sale_id, context=context):
+                cr, uid, sale_id, context=context)[0].order_line:
             if 'price_subtotal_company_currency' in line._columns.keys():
                 subtotal = line.price_subtotal_company_currency
             else:
                 subtotal = line.price_subtotal
-            prices[line.product_id] = (
-                subtotal / line.product_uom_qty)
+            if line.product_uom_qty > 0:
+                prices[line.product_id] = (
+                    subtotal / line.product_uom_qty)
+            else:
+                prices[line.product_id] = 0
         return prices
