@@ -32,7 +32,7 @@ class StockPicking(orm.Model):
         # ^LS0000 is neutral position sent by web service
         # ^LS0 is equivalant to ^LS0000
         # ^LS-10 move all fields to the right
-        label['file'] = result['label'].get('data').replace('^LS0000', '^LS10')
+        label['data'] = result['label'].get('data').replace('^LS0000', '^LS25')
         cn23_ws = [x for x in result.get('annexes') if x.get('name') == 'cn23']
         if cn23_ws:
             cn23_ws = cn23_ws[0]
