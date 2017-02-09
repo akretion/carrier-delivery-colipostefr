@@ -168,6 +168,8 @@ class StockPicking(orm.Model):
     def _prepare_laposte_customs(
             self, cr, uid, pick, packing, product_prices, context=None):
         articles = []
+        if not product_prices:
+            product_prices = {}
         for line in packing.get_operations():
             article = {}
             articles.append(article)
