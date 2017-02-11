@@ -89,22 +89,34 @@ class StockPicking(orm.Model):
         pack = super(StockPicking, self)._prepare_pack_postefr(
             cr, uid, packing, pick, option, service, france,
             product_prices=product_prices, context=context)
-        if france:
-            return pack
-        articles_weight = 0
-        pack['customs'] = self._prepare_laposte_customs(
-            cr, uid, pick, packing, product_prices, context=context)
-        if pack['customs'].get('articles'):
-            articles_weight = [x['weight']
-                               for x in pack['customs']['articles']]
-        if packing.weight < sum(articles_weight):
-            # le poids du picking se base sur le weight des stock moves
-            # qui sont pas modifiables donc on check la coherence
-            # avec les poids de la fiche produit qui sont modifiables
-            # le 0.1 est pour ~ l'emballage
-            pack['weight'] = sum(articles_weight) + 0.1
-        pack['totalAmount'] = 2  # weird value for laposte
+        if self._check_products4new_ws(cr, uid, pick, context=context):
+            articles_weight = 0
+            pack['customs'] = self._prepare_laposte_customs(
+                cr, uid, pick, packing, product_prices, context=context)
+            if pack['customs'].get('articles'):
+                articles_weight = [x['weight']
+                                   for x in pack['customs']['articles']]
+            if packing.weight < sum(articles_weight):
+                # le poids du picking se base sur le weight des stock moves
+                # qui sont pas modifiables donc on check la coherence
+                # avec les poids de la fiche produit qui sont modifiables
+                # le 0.1 est pour ~ l'emballage
+                pack['weight'] = sum(articles_weight) + 0.1
+            pack['totalAmount'] = 2  # weird value for laposte
         return pack
+
+    def _should_i_include_customs(self, cr, uid, pick, context=None):
+        """ Choose if customs infos should be included in the WS call.
+            Return bool
+        """
+        res = super(StockPicking, self)._should_i_include_customs(
+            cr, uid, pick, context=context)
+        eu_country_ids = self.pool['res.country'].search(
+            cr, uid, [('intrastat', '=', True)], context=context)
+        if pick.partner_id and pick.partner_id.country_id and \
+                pick.partner_id.country_id.id not in eu_country_ids:
+            res = True
+        return res
 
     def _laposte_get_options(self, cr, uid, ids, context=None):
         """Define options for the shipment.

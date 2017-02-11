@@ -139,16 +139,26 @@ class StockPicking(orm.Model):
         # one picking at once
         if context is None:
             context = {}
-        products = [x.product_id.name for x in pick.move_lines
-                    if not x.product_id.origin_country_id]
-        if products:
-            # On vérifie le PAYS d'ORIGINE
-            raise orm.except_orm(
-                u"Produits sans pays d'origine",
-                u"Les produits suivant:\n\n %s\n\n n'ont pas de "
-                u"pays d'origine spécifié.\n"
-                u"Merci de compléter la fiche produit."
-                % '\n'.join(products))
+        if self._should_i_include_customs(cr, uid, pick, context=None):
+            products = [x.product_id.name for x in pick.move_lines
+                        if not x.product_id.origin_country_id]
+            if products:
+                # On vérifie le PAYS d'ORIGINE
+                raise orm.except_orm(
+                    u"Produits sans pays d'origine",
+                    u"Les produits suivant:\n\n %s\n\n n'ont pas de "
+                    u"pays d'origine spécifié.\n"
+                    u"Merci de compléter la fiche produit."
+                    % '\n'.join(products))
+            # go through from _prepare_pack_postefr() delivery_roulier_colip...
+            return False
+        return True
+
+    def _should_i_include_customs(self, cr, uid, pick, context=None):
+        """ Choose if customs infos should be included in the WS call.
+            Return bool
+        """
+        return False
 
     def set_pack_weight(self, cr, uid, picking, context=None):
         pack_weights = {}
