@@ -117,9 +117,6 @@ class StockPicking(orm.Model):
         for picking in self.browse(cr, uid, ids, context=context):
             if picking.carrier_type == 'colissimo':
                 self.set_pack_weight(cr, uid, picking, context=context)
-                if picking.carrier_code in LAPOSTE_NEW_WS:
-                    self._check_products4new_ws(
-                        cr, uid, picking, context=context)
         return super(StockPicking, self).do_transfer(
             cr, uid, ids, context=context)
 
@@ -129,30 +126,8 @@ class StockPicking(orm.Model):
         for picking in self.browse(cr, uid, ids, context=context):
             if picking.carrier_type == 'colissimo':
                 self.set_pack_weight(cr, uid, picking, context=context)
-                if picking.carrier_code in LAPOSTE_NEW_WS:
-                    self._check_products4new_ws(
-                        cr, uid, picking, context=context)
         return super(StockPicking, self).action_done(
             cr, uid, ids, context=context)
-
-    def _check_products4new_ws(self, cr, uid, pick, context=None):
-        # one picking at once
-        if context is None:
-            context = {}
-        if self._should_i_include_customs(cr, uid, pick, context=None):
-            products = [x.product_id.name for x in pick.move_lines
-                        if not x.product_id.origin_country_id]
-            if products:
-                # On vérifie le PAYS d'ORIGINE
-                raise orm.except_orm(
-                    u"Produits sans pays d'origine",
-                    u"Les produits suivant:\n\n %s\n\n n'ont pas de "
-                    u"pays d'origine spécifié.\n"
-                    u"Merci de compléter la fiche produit."
-                    % '\n'.join(products))
-            # go through from _prepare_pack_postefr() delivery_roulier_colip...
-            return False
-        return True
 
     def _should_i_include_customs(self, cr, uid, pick, context=None):
         """ Choose if customs infos should be included in the WS call.
@@ -288,7 +263,6 @@ class StockPicking(orm.Model):
         delivery = {
             'ref_client': '%s-pack_number/%s' % (
                 pick.name, number_of_packages),
-            # 'weight': pick.weight_net or pick.weight,
             'date': shipping_date.strftime('%d/%m/%Y'),
             'parcel_total_number': number_of_packages,
         }

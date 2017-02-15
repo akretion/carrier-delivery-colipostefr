@@ -89,7 +89,8 @@ class StockPicking(orm.Model):
         pack = super(StockPicking, self)._prepare_pack_postefr(
             cr, uid, packing, pick, option, service, france,
             product_prices=product_prices, context=context)
-        if self._check_products4new_ws(cr, uid, pick, context=context):
+        pack['customs'] = {}
+        if self._should_i_include_customs(cr, uid, pick, context=context):
             articles_weight = 0
             pack['customs'] = self._prepare_laposte_customs(
                 cr, uid, pick, packing, product_prices, context=context)
@@ -180,27 +181,30 @@ class StockPicking(orm.Model):
     def _prepare_laposte_customs(
             self, cr, uid, pick, packing, product_prices, context=None):
         articles = []
-        if not product_prices:
-            product_prices = {}
-        for line in packing.get_operations():
-            article = {}
-            articles.append(article)
-            product = line.product_id
-            # stands for harmonized_system
-            hs = product.product_tmpl_id.get_hs_code_recursively()
-            if not hs:
-                raise orm.except_orm(
-                    u"Déclaration d'échange de bien",
-                    u"Les propriétés DEB/DES (onglet Compta) du produit '%s' "
-                    u"ne sont pas correctement remplis." % product.name)
-            article['quantity'] = '%.f' % line.product_qty
-            weight = line.product_id.weight_net or line.product_id.weight or 0
-            article['weight'] = round(weight, 3)
-            article['originCountry'] = product.origin_country_id.code
-            article['description'] = hs.description or False
-            article['hs'] = hs.hs_code
-            article['value'] = (
-                product_prices.get(product) or product.list_price)
+        if self._should_i_include_customs(cr, uid, pick, context=context):
+            if not product_prices:
+                product_prices = {}
+            for line in packing.get_operations():
+                article = {}
+                articles.append(article)
+                product = line.product_id
+                # stands for harmonized_system
+                hs = product.product_tmpl_id.get_hs_code_recursively()
+                if not hs:
+                    raise orm.except_orm(
+                        u"Déclaration d'échange de bien",
+                        u"Les propriétés DEB/DES (onglet Compta)"
+                        u"du produit '%s' "
+                        u"ne sont pas correctement remplis." % product.name)
+                article['quantity'] = '%.f' % line.product_qty
+                weight = (line.product_id.weight_net or
+                          line.product_id.weight or 0)
+                article['weight'] = round(weight, 3)
+                article['originCountry'] = product.origin_country_id.code
+                article['description'] = hs.description or False
+                article['hs'] = hs.hs_code
+                article['value'] = (
+                    product_prices.get(product) or product.list_price)
         return {
             "articles": articles,
             "category": 3,  # commercial
