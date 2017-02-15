@@ -195,7 +195,8 @@ class StockPicking(orm.Model):
                         u"Déclaration d'échange de bien",
                         u"Les propriétés DEB/DES (onglet Compta)"
                         u"du produit '%s' "
-                        u"ne sont pas correctement remplis." % product.name)
+                        u"ne sont pas correctement remplis."
+                        % product.name_get()[0][1])
                 article['quantity'] = '%.f' % line.product_qty
                 weight = (line.product_id.weight_net or
                           line.product_id.weight or 0)
