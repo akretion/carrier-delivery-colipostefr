@@ -33,3 +33,7 @@ class ProductTemplate(orm.Model):
         else:
             res = None
         return res
+
+    def get_origin_country(self, cr, uid, ids, context=None):
+        product  = self.browse(cr, uid, ids[0], context=context)
+        return product.country_id.code

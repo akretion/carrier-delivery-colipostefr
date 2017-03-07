@@ -172,10 +172,11 @@ class StockPicking(orm.Model):
                     u"Déclaration d'échange de bien",
                     u"Les propriétés DEB/DES (onglet Compta) du produit '%s' "
                     u"ne sont pas correctement remplis." % product.name)
+            country_code = product.product_tmpl_id.get_origin_country()
             article['quantity'] = '%.f' % line.product_qty
             weight = line.product_id.weight_net or line.product_id.weight or 0
             article['weight'] = round(weight, 3)
-            article['originCountry'] = product.country_id.code
+            article['originCountry'] = country_code
             article['description'] = hs.description or False
             article['hs'] = hs.intrastat_code
             article['value'] = (
