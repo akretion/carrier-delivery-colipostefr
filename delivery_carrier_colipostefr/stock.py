@@ -31,6 +31,8 @@ from laposte_api.exception_helper import (
     InvalidKeyInTemplate,
     InvalidType)
 
+from roulier.exception import CarrierError
+
 from datetime import date
 
 EXCEPT_TITLE = "'Colissimo and So' library Exception"
@@ -39,7 +41,14 @@ LAPOSTE_NEW_WS = ['COLI']
 
 
 def raise_exception(orm, message):
-    raise orm.except_orm(EXCEPT_TITLE, map_except_message(message))
+    if isinstance(message, list):
+        # with roulier
+        messages = [{'error': x.get('id'), 'message': x.get('message')}
+                    for x in message]
+        raise orm.except_orm(EXCEPT_TITLE, u'%s' % messages)
+    else:
+        # without webservice
+        raise orm.except_orm(EXCEPT_TITLE, map_except_message(message))
 
 
 def map_except_message(message):
@@ -347,6 +356,7 @@ class StockPicking(orm.Model):
                     InvalidZipCode,
                     InvalidDataForLaposteInter,
                     InvalidSequence,
+                    CarrierError,
                     InvalidMissingField) as e:
                 raise_exception(orm, e.message)
             except Exception as e:

@@ -32,16 +32,27 @@ class StockPicking(orm.Model):
         # ^LS0000 is neutral position sent by web service
         # ^LS0 is equivalant to ^LS0000
         # ^LS-10 move all fields to the right
-        label['file'] = result.get('label').replace('^LS0000', '^LS10')
-        if result.get('cn23'):
-            cn23 = {
-                'name': 'CN23_%s.pdf' % result.get('parcelNumber'),
-                'res_id': pick.id,
-                'res_model': 'stock.picking.out',
-                'datas': result['cn23'].encode('base64'),
-                'type': 'binary'
-            }
-            self.pool['ir.attachment'].create(cr, uid, cn23, context=context)
+        lab_dict = result.get('label')
+        if isinstance(lab_dict, dict):
+            # from roulier 0.1.0
+            label['file'] = lab_dict.get('data').replace('^LS0000', '^LS10')
+        else:
+            raise orm.except_orm(
+                u"Roulier lib version",
+                u"Please update your version of Roulier (at least 0.1.4)")
+        if result.get('annexes'):
+            cn23_candidates = [x for x in result['annexes']
+                               if x['name'] == 'cn23']
+            if cn23_candidates:
+                cn23 = {
+                    'name': 'CN23_%s.pdf' % result['tracking']['number'],
+                    'res_id': pick.id,
+                    'res_model': 'stock.picking.out',
+                    'datas': cn23_candidates[0]['data'].encode('base64'),
+                    'type': 'binary'
+                }
+                self.pool['ir.attachment'].create(
+                    cr, uid, cn23, context=context)
         if result.get('xml_request') and \
                 pick.company_id.colipostefr_webservice_message:
             xml = {
