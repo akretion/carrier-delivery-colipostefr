@@ -77,7 +77,7 @@ class StockPicking(orm.Model):
             product_prices = params['customs'].pop('product_prices')
             _logger.debug("Product Prices: %s" % product_prices)
             if params['customs'].get('articles'):
-                articles_weight = [x['weight']
+                articles_weight = [float(x['weight']) * float(x['quantity'])
                                    for x in params['customs']['articles']]
             if params['weight'] < sum(articles_weight):
                 # le poids du picking se base sur le weight des stock moves
