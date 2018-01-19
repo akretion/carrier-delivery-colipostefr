@@ -99,7 +99,7 @@ class StockPicking(orm.Model):
                 params['weight'] = sum(articles_weight) + 0.1
                 _logger.debug("Weight: picking %s sum articles %s" % (
                     pick.weight, sum(articles_weight)))
-            params['totalAmount'] = 2
+            params['totalAmount'] = 1
             _logger.debug("totalAmount: %s" % params['totalAmount'])
             params['options'] = self.pool['stock.picking'].browse(
                 cr, uid, pick.id, context=context)._laposte_get_options()
@@ -228,7 +228,7 @@ class StockPickingOut(orm.Model):
                     'delivery_carrier_COLI')[1]):
                 continue
             products = [x.product_id.name for x in pick.move_lines
-                        if not x.product_id.country_id]
+                        if not x.product_id.product_tmpl_id.get_origin_country()]
             if products:
                 raise orm.except_orm(
                     u"Produits sans pays d'origine",
