@@ -79,7 +79,7 @@ class DepositSlip(orm.Model):
     def create_lines_vals(self, cr, uid, deposit, context=None):
         lines = []
         for picking in deposit.picking_ids:
-            if picking.carrier_code not in ['EI', 'AI']:
+            if picking.carrier_code not in ['EI', 'AI', 'COLI']:
                 address = picking.partner_id
                 dropoff_site = None
                 model = self.pool['ir.model'].search(
