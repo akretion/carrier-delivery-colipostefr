@@ -55,5 +55,31 @@
     </record>
         <!-- Pas de niveau de recommandation possible: seulement assurance -->
 
+    <record id="delivery_carrier_CMT" model="delivery.carrier">
+        <field name="name">CMT, Colissimo Point Retrait International</field>
+        <field name="type">colissimo</field>
+        <field name="code">CMT</field>
+        <field name="use_detailed_pricelist" eval="1"/>
+        <field name="deposit_slip" eval="True"/>
+        <field name="partner_id" ref="delivery_carrier_colipostefr.partner_la_poste"/>
+        <field name="product_id" ref="delivery_carrier_colipostefr.product_product_la_poste"/>
+    </record>
+
+    <record id="CMT_laposte_deliv_carr_tmpl_STDS" model="delivery.carrier.option">
+        <field name="readonly_flag" eval="True"/>
+        <field name="mandatory" eval="True"/>
+        <field name="by_default" eval="True"/>
+        <field name="carrier_id" ref="delivery_carrier_CMT"/>
+        <field name="tmpl_option_id" ref="delivery_dropoff_site.carrier_opt_tmpl_STDS"/>
+    </record>
+
+    <record id="CMT_laposte_deliv_carr_tmpl_NM" model="delivery.carrier.option">
+        <field name="readonly_flag" eval="True"/>
+        <field name="mandatory" eval="False"/>
+        <field name="by_default" eval="False"/>
+        <field name="carrier_id" ref="delivery_carrier_CMT"/>
+        <field name="tmpl_option_id" ref="delivery_roulier_laposte.carrier_opt_tmpl_NM"/>
+    </record>
+
 </data>
 </openerp>

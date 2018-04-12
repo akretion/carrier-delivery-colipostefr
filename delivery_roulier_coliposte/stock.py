@@ -82,7 +82,7 @@ class StockPicking(orm.Model):
         params = super(StockPicking, self)._prepare_delivery_postefr(
             cr, uid, pick, carrier, context=context)
         articles_weight = 0
-        if pick.carrier_code == 'COLI':
+        if pick.carrier_code in ['COLI', 'CMT']:
             params['date'] = date.today().strftime('%Y-%m-%d')
             params['customs'] = self._prepare_laposte_customs(
                 cr, uid, pick, context=context)
@@ -99,6 +99,12 @@ class StockPicking(orm.Model):
                 params['weight'] = sum(articles_weight) + 0.1
                 _logger.debug("Weight: picking %s sum articles %s" % (
                     pick.weight, sum(articles_weight)))
+            if pick.carrier_code == 'CMT':
+                dropoff_obj = self.pool['partner.dropoff.site']
+                dropoff_site_id = dropoff_obj.search(
+                    cr, uid, [('partner_id', '=', pick.partner_id.id)])
+                dropoff_site = dropoff_obj.browse(cr, uid, dropoff_site_id)
+                params['pickupLocationId'] = dropoff_site.code
             params['totalAmount'] = 1
             _logger.debug("totalAmount: %s" % params['totalAmount'])
             params['options'] = self.pool['stock.picking'].browse(
