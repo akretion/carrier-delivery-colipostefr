@@ -197,7 +197,7 @@ class StockPicking(orm.Model):
             format_number = '+%s' % format_number
         if len(format_number) != 12:
             raise orm.except_orm(
-                u"Le numéro de téléphone n'a pas le bon format. Ex : +324XXXXXXXX")
+                "Le numero de telephone n'a pas le bon format. Ex : +324XXXXXXXX")
         return format_number
 
     def _prepare_address_postefr(self, cr, uid, pick, context=None):
