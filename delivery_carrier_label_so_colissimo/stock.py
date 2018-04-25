@@ -18,6 +18,8 @@ dropoff_mapping = {
     # Centre de distribution de la poste, Agence Coliposte
     # ou bureau de poste
     '6H': ('CDI', 'ACP', 'BPR'),
+    'CMT': ('CMT',),
+    'BDP': ('BDP',),
 }
 
 
@@ -50,8 +52,8 @@ class StockPicking(orm.Model):
             return res
         carrier = self.pool['delivery.carrier'].browse(
             cr, uid, carrier_id, context=context)
-        if carrier.type == 'so_colissimo':
-            if carrier.code in ['6H', '6M', '6J']:
+        if carrier.type == 'so_colissimo' or carrier.code in ['CMT', 'BDP']:
+            if carrier.code in ['6H', '6M', '6J', 'CMT', 'BDP']:
                 res['value'].update({'has_final_recipient': True})
                 res['domain'].update({
                     'partner_id': [
@@ -71,8 +73,8 @@ class StockPicking(orm.Model):
         super(StockPicking, self)._check_dropoff_site_according_to_carrier(
             cr, uid, ids, context=context)
         for pick in self.browse(cr, uid, ids, context=context):
-            if pick.carrier_id.type == 'so_colissimo':
-                if pick.carrier_id.code in ['6M', '6H', '6J']:
+            if pick.carrier_id.type == 'so_colissimo' or pick.carrier_id.code in ['CMT', 'BDP']:
+                if pick.carrier_id.code in ['6M', '6H', '6J', 'CMT', 'BDP']:
                     if (not pick.partner_id.dropoff_site_id
                             or pick.partner_id.dropoff_site_id.subtype
                             not in dropoff_mapping[pick.carrier_id.code]):
