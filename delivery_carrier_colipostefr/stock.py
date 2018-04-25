@@ -36,8 +36,8 @@ from roulier.exception import CarrierError
 from datetime import date
 
 EXCEPT_TITLE = "'Colissimo and So' library Exception"
-LAPOSTE_INTER = ['EI', 'AI', 'SO', 'COLI']
-LAPOSTE_NEW_WS = ['COLI']
+LAPOSTE_INTER = ['EI', 'AI', 'SO', 'COLI', 'CMT', 'BDP']
+LAPOSTE_NEW_WS = ['COLI', 'CMT', 'BDP']
 
 
 def raise_exception(orm, message):
@@ -185,12 +185,31 @@ class StockPicking(orm.Model):
     _inherit = ['stock.picking', 'abstract.coliposte.picking']
     _name = 'stock.picking'
 
+    def format_belgium_number(self, cr, uid, number, context=None):
+        format_number = number.replace('(0)', '').replace(' ', '').replace('.', '').replace('/', '').replace('-', '')
+        if format_number[0:2] == '00':
+            format_number = '+%s' % format_number[2:]
+        elif format_number[0:2] == '04':
+            format_number = '+32%s' % format_number[1:]
+        elif format_number[0:1] == '0':
+            format_number = '+324%s' % format_number[1:]
+        elif format_number[0:2] == '32':
+            format_number = '+%s' % format_number
+        if len(format_number) != 12:
+            raise orm.except_orm(
+                u"Le numéro de téléphone n'a pas le bon format. Ex : +324XXXXXXXX")
+        return format_number
+
     def _prepare_address_postefr(self, cr, uid, pick, context=None):
         address = {}
         if context is None:
             context = {}
+        if pick.carrier_id.code in ['CMT', 'BDP'] and pick.final_partner_id:
+            partner = pick.final_partner_id
+        else:
+            partner = pick.partner_id
         for elm in ['name', 'city', 'zip', 'phone', 'mobile']:
-            address[elm] = pick.partner_id[elm]
+            address[elm] = partner[elm]
         if not address['phone']:
             address['phone'] = address['mobile']
         elif not address['mobile']:
@@ -201,18 +220,23 @@ class StockPicking(orm.Model):
             address['zip'] = address['zip'].replace(char, '')
         if pick.carrier_code == 'COLI':
             context['carrier_code'] = 'COLI'
-            address['company'] = pick.partner_id.company
+            address['company'] = partner.company
         # 3 is the number of fields street
         # 35 is the field street max length
         res = self.pool['res.partner']._get_split_address(
-            cr, uid, pick.partner_id, 3, 35, context=context)
+            cr, uid, partner, 3, 35, context=context)
         address['street'], address['street2'], address['street3'] = res
         # remove bad characters from address for La poste web service
         address['street'] = unidecode(address['street'].replace(u'°', '  '))
         address['street2'] = unidecode(address['street2'].replace(u'°', '  '))
         address['street3'] = unidecode(address['street3'].replace(u'°', '  '))
-        if pick.partner_id.country_id.code and pick.partner_id.country_id.code:
-            address['countryCode'] = pick.partner_id.country_id.code
+        if partner.country_id and partner.country_id.code:
+            address['countryCode'] = partner.country_id.code
+        if pick.carrier_code in ['CMT', 'BDP']:
+            address['email'] = partner.email
+            address['firstname'] = '.'
+            if partner.country_id.code == 'BE':
+                address['phone'] = self.format_belgium_number(cr, uid, address['phone'], context=context)
         return address
 
     def _prepare_delivery_postefr(self, cr, uid, pick, carrier, context=None):
