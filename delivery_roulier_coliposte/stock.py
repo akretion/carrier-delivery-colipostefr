@@ -82,7 +82,7 @@ class StockPicking(orm.Model):
         params = super(StockPicking, self)._prepare_delivery_postefr(
             cr, uid, pick, carrier, context=context)
         articles_weight = 0
-        if pick.carrier_code in ['COLI', 'CMT']:
+        if pick.carrier_code in ['COLI', 'CMT', 'BDP']:
             params['date'] = date.today().strftime('%Y-%m-%d')
             params['customs'] = self._prepare_laposte_customs(
                 cr, uid, pick, context=context)
@@ -99,12 +99,19 @@ class StockPicking(orm.Model):
                 params['weight'] = sum(articles_weight) + 0.1
                 _logger.debug("Weight: picking %s sum articles %s" % (
                     pick.weight, sum(articles_weight)))
-            if pick.carrier_code == 'CMT':
+            if pick.carrier_code in ['CMT', 'BDP']:
                 dropoff_obj = self.pool['partner.dropoff.site']
                 dropoff_site_id = dropoff_obj.search(
                     cr, uid, [('partner_id', '=', pick.partner_id.id)])
                 dropoff_site = dropoff_obj.browse(cr, uid, dropoff_site_id)
-                params['pickupLocationId'] = dropoff_site.code
+                if not dropoff_site:
+                    raise orm.except_orm(
+                        u"Pas de point relais défini pour le partnernaire %s" % pick.partner_id.name)
+                elif len(dropoff_site) > 1:
+                    raise orm.except_orm(
+                        u"Plusieurs points relais définis pour le partnernaire %s" % pick.partner_id.name)
+                else:
+                    params['pickupLocationId'] = dropoff_site[0].code
             params['totalAmount'] = 1
             _logger.debug("totalAmount: %s" % params['totalAmount'])
             params['options'] = self.pool['stock.picking'].browse(
@@ -157,7 +164,7 @@ class StockPicking(orm.Model):
     def _prepare_sender_postefr(self, cr, uid, pick, context=None):
         sender = super(StockPicking, self)._prepare_sender_postefr(
             cr, uid, pick, context=context)
-        if pick.carrier_code == 'COLI':
+        if pick.carrier_code in ['COLI', 'CMT', 'BDP']:
             partner = self.pool['stock.picking.out']._get_label_sender_address(
                 cr, uid, pick, context=context)
             sender['country'] = partner.country_id.code
