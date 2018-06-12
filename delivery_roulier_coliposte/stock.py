@@ -82,7 +82,7 @@ class StockPicking(orm.Model):
         params = super(StockPicking, self)._prepare_delivery_postefr(
             cr, uid, pick, carrier, context=context)
         articles_weight = 0
-        if pick.carrier_code in ['COLI', 'CMT', 'BDP']:
+        if pick.carrier_code in ['COLI', 'CMT', 'BDP', 'DOS']:
             params['date'] = date.today().strftime('%Y-%m-%d')
             params['customs'] = self._prepare_laposte_customs(
                 cr, uid, pick, context=context)
@@ -164,7 +164,7 @@ class StockPicking(orm.Model):
     def _prepare_sender_postefr(self, cr, uid, pick, context=None):
         sender = super(StockPicking, self)._prepare_sender_postefr(
             cr, uid, pick, context=context)
-        if pick.carrier_code in ['COLI', 'CMT', 'BDP']:
+        if pick.carrier_code in ['COLI', 'CMT', 'BDP', 'DOS']:
             partner = self.pool['stock.picking.out']._get_label_sender_address(
                 cr, uid, pick, context=context)
             sender['country'] = partner.country_id.code

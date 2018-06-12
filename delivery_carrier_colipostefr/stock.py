@@ -36,8 +36,8 @@ from roulier.exception import CarrierError
 from datetime import date
 
 EXCEPT_TITLE = "'Colissimo and So' library Exception"
-LAPOSTE_INTER = ['EI', 'AI', 'SO', 'COLI', 'CMT', 'BDP']
-LAPOSTE_NEW_WS = ['COLI', 'CMT', 'BDP']
+LAPOSTE_INTER = ['EI', 'AI', 'SO', 'COLI', 'CMT', 'BDP', 'DOS']
+LAPOSTE_NEW_WS = ['COLI', 'CMT', 'BDP', 'DOS']
 
 
 def raise_exception(orm, message):
@@ -132,7 +132,7 @@ class AbstractColipostePicking(orm.AbstractModel):
                 if elm.carrier_code in ['8Q', '7Q']:
                     res = True
                 if (elm.carrier_code in LAPOSTE_INTER and
-                        elm.carrier_code != 'COLI' and not eu_country):
+                        elm.carrier_code not in ['COLI', 'DOS'] and not eu_country):
                     res = True
                 elif elm.carrier_code in ['9V', '9L'] \
                         and elm.partner_id.country_id \
@@ -218,8 +218,8 @@ class StockPicking(orm.Model):
             address['zip'] = ''
         for char in ['-', ' ']:
             address['zip'] = address['zip'].replace(char, '')
-        if pick.carrier_code == 'COLI':
-            context['carrier_code'] = 'COLI'
+        if pick.carrier_code in ['COLI', 'DOS']:
+            context['carrier_code'] = pick.carrier_code
             address['company'] = partner.company
         # 3 is the number of fields street
         # 35 is the field street max length
