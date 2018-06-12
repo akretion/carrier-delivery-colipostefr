@@ -113,7 +113,7 @@
     </record>
 
     <record id="delivery_carrier_DOS" model="delivery.carrier">
-        <field name="name">Colissimo Domicile - avec signature</field>
+        <field name="name">DOS, Colissimo Domicile Europe - avec signature</field>
         <field name="type">colissimo</field>
         <field name="code">DOS</field>
         <field name="use_detailed_pricelist" eval="1"/>
