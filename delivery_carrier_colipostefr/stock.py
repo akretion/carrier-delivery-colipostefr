@@ -232,7 +232,7 @@ class StockPicking(orm.Model):
         address['street3'] = unidecode(address['street3'].replace(u'°', '  '))
         if partner.country_id and partner.country_id.code:
             address['countryCode'] = partner.country_id.code
-        if pick.carrier_code in ['CMT', 'BDP']:
+        if pick.carrier_code in ['CMT', 'BDP', 'DOS']:
             address['email'] = partner.email
             address['firstname'] = '.'
             if partner.country_id.code == 'BE':
