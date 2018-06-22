@@ -69,14 +69,16 @@ class StockPicking(orm.Model):
     def _prepare_delivery_postefr(self, cr, uid, pick, carrier, context=None):
         params = super(StockPicking, self)._prepare_delivery_postefr(
             cr, uid, pick, carrier, context=context)
-        articles_weight = 0
+        articles_weight = [0.02]
         if pick.carrier_code == 'COLI':
             params['date'] = date.today().strftime('%Y-%m-%d')
             params['customs'] = self._prepare_laposte_customs(
                 cr, uid, pick, context=context)
             product_prices = params['customs'].pop('product_prices')
             _logger.debug("Product Prices: %s" % product_prices)
-            if params['customs'].get('articles'):
+            print params.keys()
+            print params['customs']
+            if params['customs'].get('articles') and params['customs']['articles']:
                 articles_weight = [float(x['weight']) * float(x['quantity'])
                                    for x in params['customs']['articles']]
             if params['weight'] < sum(articles_weight):
@@ -180,6 +182,7 @@ class StockPicking(orm.Model):
             article['hs'] = hs.intrastat_code
             article['value'] = (
                 product_prices.get(product) or product.list_price)
+        _logger.info(articles)
         return {
             "articles": articles,
             "category": 3,  # commercial

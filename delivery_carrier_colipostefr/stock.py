@@ -182,6 +182,7 @@ class StockPicking(orm.Model):
             context = {}
         for elm in ['name', 'city', 'zip', 'phone', 'mobile']:
             address[elm] = pick.partner_id[elm]
+        address['name'] = unidecode(address['name'])
         if not address['phone']:
             address['phone'] = address['mobile']
         elif not address['mobile']:
@@ -199,9 +200,10 @@ class StockPicking(orm.Model):
             cr, uid, pick.partner_id, 3, 35, context=context)
         address['street'], address['street2'], address['street3'] = res
         # remove bad characters from address for La poste web service
-        address['street'] = unidecode(address['street'].replace(u'°', '  '))
-        address['street2'] = unidecode(address['street2'].replace(u'°', '  '))
-        address['street3'] = unidecode(address['street3'].replace(u'°', '  '))
+        for elem in [u'°', u'’']:
+            address['street'] = unidecode(address['street'].replace(elm, '  '))
+            address['street2'] = unidecode(address['street2'].replace(elm, '  '))
+            address['street3'] = unidecode(address['street3'].replace(elm, '  '))
         if pick.partner_id.country_id.code and pick.partner_id.country_id.code:
             address['countryCode'] = pick.partner_id.country_id.code
         return address

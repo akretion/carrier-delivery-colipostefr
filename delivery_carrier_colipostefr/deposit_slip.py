@@ -17,6 +17,8 @@ from csv import Dialect
 from _csv import QUOTE_MINIMAL, register_dialect
 import base64
 from tools import DEFAULT_SERVER_DATETIME_FORMAT
+from unidecode import unidecode
+
 
 # This code is used by Colissimo and So Colissimo
 # TODO this code is not fully updated for So Colissimo
@@ -79,7 +81,7 @@ class DepositSlip(orm.Model):
     def create_lines_vals(self, cr, uid, deposit, context=None):
         lines = []
         for picking in deposit.picking_ids:
-            if picking.carrier_code not in ['EI', 'AI']:
+            if picking.carrier_code not in ['EI', 'AI', 'COLI']:
                 address = picking.partner_id
                 dropoff_site = None
                 model = self.pool['ir.model'].search(
@@ -96,6 +98,7 @@ class DepositSlip(orm.Model):
                 if picking.carrier_code == "6C":
                     AR = "O"
                 weight = int(picking.weight*1000)
+                name = unidecode(address.name)
                 name = address.name.replace(' ', '`')
                 if address.title:
                     name = address.title.shortcut.replace('.', '') + "`" + name
@@ -125,14 +128,14 @@ class DepositSlip(orm.Model):
                     "Devise assurance": "EUR",
                     "Livraison Samedi": "O",
                     "Non Mécanisable": non_machi,
-                    "Nom du destinataire": name,
+                    "Nom du destinataire": unidecode(name),
                     "Raison sociale": "",
                     "Première ligne d’adresse": "",
                     "Seconde ligne d'adresse": "",
-                    "Troisième ligne d'adresse": address.street,
+                    "Troisième ligne d'adresse": unidecode(address.street),
                     "Quatrième ligne d’adresse": "",
                     "Code postal du destinataire": address.zip,
-                    "Commune du destinataire": address.city,
+                    "Commune du destinataire": unidecode(address.city),
                     "Référence chargeur": picking.name,
                     "Commentaire 1": "",
                     "Information de routage": barcode_routage,
@@ -143,10 +146,10 @@ class DepositSlip(orm.Model):
                     "Franc de taxe et de droit": "N",
                     # TODO
                     "Identifiant Colissimo du destinataire": "",
-                    "Téléphone": phone or mobile,
+                    "Téléphone": unidecode(phone) or unidecode(mobile),
                     "Courriel": self._coliposte_default_mail(
                         cr, uid, address.email, context=context),
-                    "Téléphone portable": mobile or phone,
+                    "Téléphone portable": unidecode(mobile) or unidecode(phone),
                     "Code avoir/promotion": "",
                     "Type Alerte Destinataire": "",
                 }
