@@ -76,8 +76,9 @@ class StockPicking(orm.Model):
                 cr, uid, pick, context=context)
             product_prices = params['customs'].pop('product_prices')
             _logger.debug("Product Prices: %s" % product_prices)
-            print params.keys()
-            print params['customs']
+            for article in params['customs']['articles']:
+               if article['weight'] <= 0:
+                   article['weight'] = 0.01
             if params['customs'].get('articles') and params['customs']['articles']:
                 articles_weight = [float(x['weight']) * float(x['quantity'])
                                    for x in params['customs']['articles']]
