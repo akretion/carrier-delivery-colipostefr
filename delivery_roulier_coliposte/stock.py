@@ -165,6 +165,9 @@ class StockPicking(orm.Model):
                 product_prices = self._get_product_prices(
                     cr, uid, sale_line_id, context=context)
         for line in pick.move_lines:
+            # TODO FIX during next migration HACK for skipping all componant
+            if line.sale_parent_line_id:
+                continue
             article = {}
             articles.append(article)
             product = line.product_id
