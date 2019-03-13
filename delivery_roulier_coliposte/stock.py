@@ -93,9 +93,10 @@ class StockPicking(orm.Model):
             # hack to get the shipping cost
             # already fixed in next version
             shipping_cost = 0
-            for line in pick.sale_id.order_line:
-                if line.product_id.default_code == 'SHIP':
-                    shipping_cost = line.price_unit
+            if pick.sale_id:
+                for line in pick.sale_id.order_line:
+                    if line.product_id.default_code == 'SHIP':
+                        shipping_cost = line.price_unit
             params['totalAmount'] = int(shipping_cost * 100)
             _logger.debug("totalAmount: %s" % params['totalAmount'])
             params['options'] = self.pool['stock.picking'].browse(
