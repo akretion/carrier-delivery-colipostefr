@@ -90,7 +90,13 @@ class StockPicking(orm.Model):
                 params['weight'] = sum(articles_weight) + 0.1
                 _logger.debug("Weight: picking %s sum articles %s" % (
                     pick.weight, sum(articles_weight)))
-            params['totalAmount'] = 2
+            # hack to get the shipping cost
+            # already fixed in next version
+            shipping_cost = 0
+            for line in pick.sale_id.order_line:
+                if line.product_id.default_code == 'SHIP':
+                    shipping_cost = line.price_unit
+            params['totalAmount'] = int(shipping_cost * 100)
             _logger.debug("totalAmount: %s" % params['totalAmount'])
             params['options'] = self.pool['stock.picking'].browse(
                 cr, uid, pick.id, context=context)._laposte_get_options()
