@@ -92,7 +92,7 @@ class StockPicking(orm.Model):
                     pick.weight, sum(articles_weight)))
             # hack to get the shipping cost
             # already fixed in next version
-            shipping_cost = 0
+            shipping_cost = 0.02
             if pick.sale_id:
                 for line in pick.sale_id.order_line:
                     if line.product_id.default_code == 'SHIP':
