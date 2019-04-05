@@ -21,6 +21,13 @@ from tools import DEFAULT_SERVER_DATETIME_FORMAT
 # This code is used by Colissimo and So Colissimo
 # TODO this code is not fully updated for So Colissimo
 
+CARRIER_CODE = {
+    'DOS': '6C',
+    'DOM': '6A',
+    'BDP': '6H',
+    'CMT': '6M',
+}
+
 
 class LaposteDialect(Dialect):
     """Describe the usual properties of Excel-generated CSV files."""
@@ -113,9 +120,13 @@ class DepositSlip(orm.Model):
                 if address.country_id:
                     country_code = address.country_id.code
 
+                if CARRIER_CODE.get(picking.carrier_code, False):
+                    code_produit = CARRIER_CODE[picking.carrier_code]
+                else:
+                    code_produit = picking.carrier_code
                 vals = {
                     "Type d'enregistrement": "DDD001",
-                    "Code produit": picking.carrier_code,
+                    "Code produit": code_produit,
                     "Numéro du colis": sequence,
                     "Poids du colis": weight,
                     "Code postal de livraison": dropoff_site and dropoff_site.zip or address.zip,
