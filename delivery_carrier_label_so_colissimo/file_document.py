@@ -71,6 +71,7 @@ class FileDocument(orm.Model):
                     site += "','" + line[3:-1].replace("'", "''") + "'"
                     site = site.replace('ESPACE CITYSSIMO', 'CITYSSIMO').replace('BUREAU DE POSTE', 'LA POSTE')
                     query = base_query + " (%s)" % site
+                    query = query.replace('\xa0', '')
                     try:
                         cr.execute(query)
                         pass
