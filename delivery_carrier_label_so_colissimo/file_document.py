@@ -12,6 +12,7 @@ from openerp.osv import orm
 import base64
 from cStringIO import StringIO
 import time
+from unidecode import unidecode
 
 # TODO clean this dirty code
 # TODO the street2 and street3 should be merge into the tmp table
@@ -71,7 +72,7 @@ class FileDocument(orm.Model):
                     site += "','" + line[3:-1].replace("'", "''") + "'"
                     site = site.replace('ESPACE CITYSSIMO', 'CITYSSIMO').replace('BUREAU DE POSTE', 'LA POSTE')
                     query = base_query + " (%s)" % site
-                    query = query.replace('\xa0', '')
+                    query = unidecode(query)
                     try:
                         cr.execute(query)
                         pass
